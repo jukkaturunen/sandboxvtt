@@ -15,17 +15,54 @@
 | Phase 4: Sandbox View & Layout | ✅ Complete | 100% | Layout and WebSocket ready |
 | Phase 5: Image Management | ✅ Complete | 100% | Upload, list, activate done |
 | Phase 6: Image Display | ✅ Complete | 100% | Canvas with zoom/pan done |
-| Phase 7: Token System | 🔄 In Progress | 0% | Starting now |
-| Phase 8: Chat System | ⏳ Not Started | 0% | - |
+| Phase 7: Token System | ✅ Complete | 100% | All token features working |
+| Phase 8: Chat System | 🔄 In Progress | 0% | Starting now |
 | Phase 9: Link Sharing | ⏳ Not Started | 0% | - |
 | Phase 10: Polish & Error Handling | ⏳ Not Started | 0% | - |
 | Phase 11: Testing & Deployment | ⏳ Not Started | 0% | - |
 
-**Overall Completion**: 7/11 phases (64%)
+**Overall Completion**: 8/11 phases (73%)
 
 ---
 
-## Current Phase: Phase 7 - Token System
+## Current Phase: Phase 8 - Chat System
+
+### Previous Phase (Phase 7) - COMPLETED ✅
+
+#### 7.1 Token Panel UI
+- [x] Create token panel (upper right)
+- [x] Add color selector with 10 colors
+- [x] Add token name input field
+- [x] Create token button
+- [x] Instructions for users
+
+#### 7.2 Token Creation
+- [x] Implement pending token state
+- [x] Click on map to place token
+- [x] Send token data to backend
+- [x] Broadcast to all clients via WebSocket
+- [x] Render tokens on canvas
+
+#### 7.3 Token Movement
+- [x] Implement drag-and-drop for tokens
+- [x] Update token position during drag
+- [x] Save position to database on drop
+- [x] Broadcast moves to all clients
+- [x] Optimistic UI updates
+
+#### 7.4 Token Deletion
+- [x] Right-click context menu on tokens
+- [x] Delete option in context menu
+- [x] Delete from database
+- [x] Broadcast deletion to all clients
+- [x] Remove from all clients' views
+
+#### 7.5 Token-Image Relationship
+- [x] Associate tokens with specific images
+- [x] Store image_id with each token
+- [x] Filter tokens by active image
+- [x] Tokens persist when switching views
+- [x] Tokens reappear with their image
 
 ### Previous Phase (Phase 6) - COMPLETED ✅
 
@@ -222,6 +259,16 @@ Phase 6 complete! Active images now display on canvas with full zoom (mouse whee
 ---
 
 ## Completed Milestones
+
+- **2025-10-21**: Phase 7 complete - Token System
+  - TokenPanel component with color picker and name input
+  - Click-to-place token creation workflow
+  - Full drag-and-drop token movement
+  - Right-click context menu for deletion
+  - Token-image association (tokens tied to specific maps)
+  - Real-time synchronization across all clients
+  - Optimistic UI updates for smooth interaction
+  - All users can create, move, and delete any token
 
 - **2025-10-21**: Phase 6 complete - Image Display & Interaction
   - ImageCanvas component with full zoom/pan controls

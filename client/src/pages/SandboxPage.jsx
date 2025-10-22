@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import CharacterNameModal from '../components/CharacterNameModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
+import TokenPanel from '../components/TokenPanel';
 import useSocket from '../hooks/useSocket';
 import '../styles/SandboxPage.css';
 
@@ -15,6 +16,7 @@ function SandboxPage() {
   const [loading, setLoading] = useState(true);
   const [characterName, setCharacterName] = useState(null);
   const [showNameModal, setShowNameModal] = useState(false);
+  const [pendingToken, setPendingToken] = useState(null);
 
   const { socket, isConnected } = useSocket(id);
 
@@ -100,16 +102,20 @@ function SandboxPage() {
             </div>
           </div>
           <div className="canvas-container">
-            <ImageCanvas sandboxId={id} socket={socket} />
+            <ImageCanvas
+              sandboxId={id}
+              socket={socket}
+              pendingToken={pendingToken}
+              onTokenPlaced={() => setPendingToken(null)}
+            />
           </div>
         </div>
 
         {/* Right Panel - Tokens and Chat */}
         <div className="right-panel">
-          <div className="token-panel">
-            <h3>Tokens</h3>
-            <p>Token controls coming in Phase 7</p>
-          </div>
+          <TokenPanel
+            onCreateToken={(token) => setPendingToken(token)}
+          />
           <div className="chat-panel">
             <h3>Chat</h3>
             <p>Chat coming in Phase 8</p>

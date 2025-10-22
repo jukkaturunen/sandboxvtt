@@ -12,6 +12,10 @@
   cursor: grabbing;
 }
 
+.image-canvas.placing-token {
+  cursor: crosshair;
+}
+
 .image-canvas.no-image {
   display: flex;
   align-items: center;
@@ -99,4 +103,70 @@
   max-width: none;
   pointer-events: none;
   image-rendering: crisp-edges;
+}
+
+/* Tokens */
+.token {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  transition: transform 0.1s;
+  z-index: 5;
+}
+
+.token:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  z-index: 10;
+}
+
+.token-name {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 0.25rem;
+}
+
+.context-menu button {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border-radius: 0.25rem;
+  transition: background 0.2s;
+}
+
+.context-menu button:hover {
+  background: #f8f9fa;
+  color: #e74c3c;
 }
