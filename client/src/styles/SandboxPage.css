@@ -136,13 +136,15 @@
   flex-direction: column;
   background: white;
   border-left: 1px solid #ddd;
+  overflow: hidden;
+  height: 100vh;
 }
 
 .token-panel {
   background: #f8f9fa;
   padding: 1rem;
   border-bottom: 1px solid #ddd;
-  min-height: 200px;
+  flex-shrink: 0;
 }
 
 .token-panel h3 {
@@ -151,18 +153,12 @@
   color: #333;
 }
 
-.chat-panel {
+/* Chat panel container wrapper */
+.right-panel > div:last-child {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
   padding: 1rem;
   overflow: hidden;
-}
-
-.chat-panel h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #333;
 }
 
 /* Layout for players (no GM panel) */

@@ -4,6 +4,7 @@ import CharacterNameModal from '../components/CharacterNameModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
 import TokenPanel from '../components/TokenPanel';
+import ChatPanel from '../components/ChatPanel';
 import useSocket from '../hooks/useSocket';
 import '../styles/SandboxPage.css';
 
@@ -116,10 +117,12 @@ function SandboxPage() {
           <TokenPanel
             onCreateToken={(token) => setPendingToken(token)}
           />
-          <div className="chat-panel">
-            <h3>Chat</h3>
-            <p>Chat coming in Phase 8</p>
-          </div>
+          <ChatPanel
+            sandboxId={id}
+            socket={socket}
+            characterName={characterName}
+            role={role}
+          />
         </div>
       </div>
     </div>
