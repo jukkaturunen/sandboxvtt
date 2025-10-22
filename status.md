@@ -13,19 +13,49 @@
 | Phase 2: WebSocket Infrastructure | ✅ Complete | 100% | Real-time events ready |
 | Phase 3: Front Page & Creation | ✅ Complete | 100% | Routing and pages done |
 | Phase 4: Sandbox View & Layout | ✅ Complete | 100% | Layout and WebSocket ready |
-| Phase 5: Image Management | 🔄 In Progress | 0% | Starting now |
-| Phase 6: Image Display | ⏳ Not Started | 0% | - |
+| Phase 5: Image Management | ✅ Complete | 100% | Upload, list, activate done |
+| Phase 6: Image Display | 🔄 In Progress | 0% | Starting now |
 | Phase 7: Token System | ⏳ Not Started | 0% | - |
 | Phase 8: Chat System | ⏳ Not Started | 0% | - |
 | Phase 9: Link Sharing | ⏳ Not Started | 0% | - |
 | Phase 10: Polish & Error Handling | ⏳ Not Started | 0% | - |
 | Phase 11: Testing & Deployment | ⏳ Not Started | 0% | - |
 
-**Overall Completion**: 5/11 phases (45%)
+**Overall Completion**: 6/11 phases (55%)
 
 ---
 
-## Current Phase: Phase 5 - Image Management (GM)
+## Current Phase: Phase 6 - Image Display & Interaction
+
+### Previous Phase (Phase 5) - COMPLETED ✅
+
+#### 5.1 GM Control Panel - Image Upload
+- [x] Create image upload button and file input
+- [x] Prompt for image name during upload
+- [x] Implement file upload with FormData
+- [x] Show upload progress/loading state
+- [x] Handle upload errors
+- [x] Real-time broadcast to all clients via WebSocket
+
+#### 5.2 Image List Display
+- [x] Fetch and display list of uploaded images
+- [x] Show image names in GM panel
+- [x] Highlight active image
+- [x] Display image count
+- [x] Listen for image-uploaded socket events
+
+#### 5.3 Image Activation
+- [x] Add "Activate" button for each image
+- [x] Implement activate button handler
+- [x] Update active status via API
+- [x] Emit WebSocket event to all clients
+- [x] Update UI to reflect new active image
+- [x] Disable activate button for current image
+
+#### 5.4 Link Sharing (GM Panel)
+- [x] Display GM and Player invite links
+- [x] Implement copy-to-clipboard functionality
+- [x] Show confirmation when link copied
 
 ### Previous Phase (Phase 4) - COMPLETED ✅
 
@@ -143,10 +173,10 @@
 
 ### Current Phase Tasks
 
-Phase 5-11 will be implemented next. The core infrastructure is now complete!
+Phase 6-11 will be implemented next.
 
 ### Current Status
-Phase 4 complete! Sandbox view with complete layout, character naming modal, and WebSocket integration. Connection status displayed in real-time. GM panel visible only to GM, players get character name modal. Ready for Phase 5 - Image Management.
+Phase 5 complete! GM can now upload images, view them in a list, activate/switch between them, and share invite links. All image changes broadcast in real-time via WebSocket. Ready for Phase 6 - Image Display (rendering active image on canvas with zoom/pan).
 
 ---
 
@@ -164,6 +194,15 @@ Phase 4 complete! Sandbox view with complete layout, character naming modal, and
 ---
 
 ## Completed Milestones
+
+- **2025-10-21**: Phase 5 complete - Image Management (GM)
+  - Complete GMPanel component with all image management features
+  - File upload with image naming
+  - Real-time image list with active highlighting
+  - Image activation/switching functionality
+  - GM and Player link sharing with copy-to-clipboard
+  - WebSocket integration for real-time updates
+  - All users see image changes instantly
 
 - **2025-10-21**: Phase 4 complete - Sandbox view and WebSocket integration
   - Complete 3-column layout (GM panel, canvas, right panel)

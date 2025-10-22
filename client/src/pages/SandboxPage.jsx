@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import CharacterNameModal from '../components/CharacterNameModal';
+import GMPanel from '../components/GMPanel';
 import useSocket from '../hooks/useSocket';
 import '../styles/SandboxPage.css';
 
@@ -83,16 +84,7 @@ function SandboxPage() {
       <div className="sandbox-layout">
         {/* GM Panel - only visible to GM */}
         {role === 'gm' && (
-          <div className="gm-panel">
-            <h3>GM Controls</h3>
-            <div className="panel-section">
-              <p>Image management coming soon...</p>
-            </div>
-            <div className="panel-section">
-              <h4>Share Links</h4>
-              <p>GM Link / Player Link</p>
-            </div>
-          </div>
+          <GMPanel sandboxId={id} socket={socket} />
         )}
 
         {/* Main Canvas Area */}
