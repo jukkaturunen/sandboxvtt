@@ -1,0 +1,24 @@
+sandboxvtt/
+├── .env
+├── .gitignore
+├── README.md
+├── requirements.md
+├── implementation-plan.md
+├── status.md
+├── package.json
+├── node_modules/
+├── client/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── index.html
+│   ├── node_modules/
+│   ├── public/
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       └── index.css
+└── server/
+    ├── src/
+    │   └── server.js
+    └── uploads/
+        └── .gitkeep
