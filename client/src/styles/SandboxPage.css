@@ -165,3 +165,45 @@
 .sandbox-layout:not(:has(.gm-panel)) {
   grid-template-columns: 1fr 300px;
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sandbox-layout {
+    grid-template-columns: 200px 1fr 280px;
+  }
+
+  .sandbox-layout:not(:has(.gm-panel)) {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sandbox-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sandbox-layout:not(:has(.gm-panel)) {
+    grid-template-columns: 1fr;
+  }
+
+  .gm-panel {
+    height: auto;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .right-panel {
+    display: none; /* Hide tokens/chat on mobile - canvas takes priority */
+  }
+
+  .canvas-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .connection-status {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+}

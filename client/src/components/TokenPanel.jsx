@@ -19,13 +19,18 @@ function TokenPanel({ onCreateToken }) {
   ];
 
   const handleCreateToken = () => {
-    if (!tokenName.trim()) {
-      alert('Please enter a token name');
+    const trimmedName = tokenName.trim();
+
+    if (!trimmedName) {
+      return; // Button is already disabled, so this shouldn't happen
+    }
+
+    if (trimmedName.length < 1) {
       return;
     }
 
     onCreateToken({
-      name: tokenName.trim(),
+      name: trimmedName,
       color: tokenColor,
     });
 
@@ -45,8 +50,9 @@ function TokenPanel({ onCreateToken }) {
           placeholder="Token name..."
           maxLength={20}
           className="token-name-input"
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === 'Enter') {
+              e.preventDefault();
               handleCreateToken();
             }
           }}

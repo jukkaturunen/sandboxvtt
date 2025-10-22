@@ -9,6 +9,9 @@ function useSocket(sandboxId) {
     // Connect to Socket.io server
     const socket = io('http://localhost:3001', {
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     socketRef.current = socket;
@@ -16,15 +19,20 @@ function useSocket(sandboxId) {
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
       setIsConnected(true);
-      
+
       // Join the sandbox room
       if (sandboxId) {
         socket.emit('join-sandbox', sandboxId);
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      setIsConnected(false);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
       setIsConnected(false);
     });
 

@@ -118,6 +118,7 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           disabled={!characterName}
+          maxLength={500}
         />
         <button
           type="submit"

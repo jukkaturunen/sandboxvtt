@@ -103,10 +103,9 @@ module.exports = function(io) {
       // Store relative path from uploads directory
       const filePath = `${sandboxId}/${req.file.filename}`;
       
-      // Check if this is the first image (make it active by default)
-      const existingImages = db.getImages.all(sandboxId);
-      const isActive = existingImages.length === 0 ? 1 : 0;
-      
+      // Images are not active by default - GM must activate them manually
+      const isActive = 0;
+
       const result = db.createImage.run(sandboxId, imageName, filePath, isActive);
       
       const imageData = {

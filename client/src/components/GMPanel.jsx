@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 import '../styles/GMPanel.css';
 
 function GMPanel({ sandboxId, socket }) {
@@ -82,7 +83,7 @@ function GMPanel({ sandboxId, socket }) {
       // Image will be added via socket event
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+      showNotification('Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -99,7 +100,7 @@ function GMPanel({ sandboxId, socket }) {
       // State will be updated via socket event
     } catch (error) {
       console.error('Error activating image:', error);
-      alert('Failed to activate image');
+      showNotification('Failed to activate image. Please try again.');
     }
   };
 
@@ -153,7 +154,14 @@ function GMPanel({ sandboxId, socket }) {
               disabled={uploading || !imageName.trim()}
               className="upload-button"
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? (
+                <>
+                  Uploading...
+                  <LoadingSpinner size="small" inline />
+                </>
+              ) : (
+                'Upload'
+              )}
             </button>
           </>
         )}
