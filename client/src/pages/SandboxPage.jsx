@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import CharacterNameModal from '../components/CharacterNameModal';
 import GMPanel from '../components/GMPanel';
+import ImageCanvas from '../components/ImageCanvas';
 import useSocket from '../hooks/useSocket';
 import '../styles/SandboxPage.css';
 
@@ -99,9 +100,7 @@ function SandboxPage() {
             </div>
           </div>
           <div className="canvas-container">
-            <p style={{ textAlign: 'center', marginTop: '2rem', color: '#999' }}>
-              Canvas area - Image display coming in Phase 6
-            </p>
+            <ImageCanvas sandboxId={id} socket={socket} />
           </div>
         </div>
 

@@ -1,0 +1,102 @@
+.image-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #ecf0f1;
+  cursor: grab;
+  user-select: none;
+}
+
+.image-canvas.dragging {
+  cursor: grabbing;
+}
+
+.image-canvas.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.no-image-message {
+  text-align: center;
+  color: #95a5a6;
+}
+
+.no-image-message h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #7f8c8d;
+}
+
+.no-image-message p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Canvas Controls */
+.canvas-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  z-index: 10;
+}
+
+.reset-button {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reset-button:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+}
+
+.reset-button:active {
+  transform: translateY(0);
+}
+
+.zoom-level {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #667eea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Image Wrapper */
+.image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: center center;
+  transition: transform 0.1s ease-out;
+  will-change: transform;
+}
+
+.image-canvas.dragging .image-wrapper {
+  transition: none;
+}
+
+.image-wrapper img {
+  display: block;
+  max-width: none;
+  pointer-events: none;
+  image-rendering: crisp-edges;
+}
