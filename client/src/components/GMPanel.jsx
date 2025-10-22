@@ -6,6 +6,7 @@ function GMPanel({ sandboxId, socket }) {
   const [uploading, setUploading] = useState(false);
   const [imageName, setImageName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   // Fetch images on mount
   useEffect(() => {
@@ -102,17 +103,31 @@ function GMPanel({ sandboxId, socket }) {
     }
   };
 
+  const showNotification = (message) => {
+    setNotification(message);
+    setTimeout(() => setNotification(null), 2000);
+  };
+
   const copyLink = (linkType) => {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/sandbox/${sandboxId}?role=${linkType}`;
     navigator.clipboard.writeText(link).then(() => {
-      alert(`${linkType === 'gm' ? 'GM' : 'Player'} link copied to clipboard!`);
+      showNotification(`${linkType === 'gm' ? 'GM' : 'Player'} link copied to clipboard!`);
+    }).catch(() => {
+      showNotification('Failed to copy link');
     });
   };
 
   return (
     <div className="gm-panel">
       <h3>GM Controls</h3>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className="notification-toast">
+          {notification}
+        </div>
+      )}
 
       {/* Image Upload Section */}
       <div className="panel-section">
