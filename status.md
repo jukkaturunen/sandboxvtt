@@ -13,7 +13,7 @@
 | Phase 2: WebSocket Infrastructure | ✅ Complete | 100% | Real-time events ready |
 | Phase 3: Front Page & Creation | ✅ Complete | 100% | Routing and pages done |
 | Phase 4: Sandbox View & Layout | ✅ Complete | 100% | Layout and WebSocket ready |
-| Phase 5: Image Management | ✅ Complete | 100% | Upload, list, activate done |
+| Phase 5: Image Management | ✅ Complete | 100% | Upload, list, activate, preview |
 | Phase 6: Image Display | ✅ Complete | 100% | Canvas with zoom/pan done |
 | Phase 7: Token System | ✅ Complete | 100% | All token features working |
 | Phase 8: Chat System | ✅ Complete | 100% | All chat features working |
@@ -400,11 +400,19 @@ Phase 10 complete! Application is now polished with comprehensive error handling
   - Smooth image transitions
   - Auto-centering on image load
 
-- **2025-10-21**: Phase 5 complete - Image Management (GM)
+- **2025-10-22**: Phase 5 complete - Image Management (GM) - UPDATED
   - Complete GMPanel component with all image management features
   - File upload with image naming
   - Real-time image list with active highlighting
   - Image activation/switching functionality
+  - **GM-only Image Preview feature (Section 5.4)**
+    - Click image name or "Preview" button to preview without activating
+    - Preview mode shows yellow border and "Preview Mode" indicator
+    - "Previewing" badge on currently previewed image
+    - "Return to Active" button to exit preview mode
+    - Preview doesn't affect what players see (GM-only)
+    - Tokens still shown for previewed images
+  - Images no longer auto-activate on upload (GM must manually activate)
   - GM and Player link sharing with copy-to-clipboard
   - WebSocket integration for real-time updates
   - All users see image changes instantly

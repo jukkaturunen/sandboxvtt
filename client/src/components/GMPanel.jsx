@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import '../styles/GMPanel.css';
 
-function GMPanel({ sandboxId, socket }) {
+function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [imageName, setImageName] = useState('');
@@ -73,8 +73,6 @@ function GMPanel({ sandboxId, socket }) {
 
       if (!response.ok) throw new Error('Upload failed');
 
-      const data = await response.json();
-
       // Clear form
       setSelectedFile(null);
       setImageName('');
@@ -107,6 +105,18 @@ function GMPanel({ sandboxId, socket }) {
   const showNotification = (message) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 2000);
+  };
+
+  const handlePreview = (image) => {
+    if (onPreviewImage) {
+      onPreviewImage(image);
+    }
+  };
+
+  const handleReturnToActive = () => {
+    if (onPreviewImage) {
+      onPreviewImage(null);
+    }
   };
 
   const copyLink = (linkType) => {
@@ -169,7 +179,18 @@ function GMPanel({ sandboxId, socket }) {
 
       {/* Image List Section */}
       <div className="panel-section">
-        <h4>Images ({images.length})</h4>
+        <div className="section-header">
+          <h4>Images ({images.length})</h4>
+          {previewImage && (
+            <button
+              onClick={handleReturnToActive}
+              className="return-to-active-button"
+              title="Return to active view"
+            >
+              ← Return to Active
+            </button>
+          )}
+        </div>
         {images.length === 0 ? (
           <p className="no-images">No images uploaded yet</p>
         ) : (
@@ -180,7 +201,13 @@ function GMPanel({ sandboxId, socket }) {
                 className={`image-item ${image.is_active ? 'active' : ''}`}
               >
                 <div className="image-info">
-                  <span className="image-name">{image.name}</span>
+                  <span
+                    className={`image-name clickable ${previewImage?.id === image.id ? 'previewing' : ''}`}
+                    onClick={() => handlePreview(image)}
+                    title="Click to preview"
+                  >
+                    {image.name}
+                  </span>
                   {image.is_active && <span className="active-badge">Active</span>}
                 </div>
                 <button

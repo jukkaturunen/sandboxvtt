@@ -18,6 +18,7 @@ function SandboxPage() {
   const [characterName, setCharacterName] = useState(null);
   const [showNameModal, setShowNameModal] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null); // GM-only preview
 
   const { socket, isConnected } = useSocket(id);
 
@@ -88,7 +89,12 @@ function SandboxPage() {
       <div className="sandbox-layout">
         {/* GM Panel - only visible to GM */}
         {role === 'gm' && (
-          <GMPanel sandboxId={id} socket={socket} />
+          <GMPanel
+            sandboxId={id}
+            socket={socket}
+            onPreviewImage={(image) => setPreviewImage(image)}
+            previewImage={previewImage}
+          />
         )}
 
         {/* Main Canvas Area */}
@@ -108,6 +114,7 @@ function SandboxPage() {
               socket={socket}
               pendingToken={pendingToken}
               onTokenPlaced={() => setPendingToken(null)}
+              gmPreviewImage={role === 'gm' ? previewImage : null}
             />
           </div>
         </div>

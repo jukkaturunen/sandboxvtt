@@ -16,6 +16,10 @@
   cursor: crosshair;
 }
 
+.image-canvas.preview-mode {
+  border: 3px solid #f9ca24;
+}
+
 .image-canvas.no-image {
   display: flex;
   align-items: center;
@@ -78,8 +82,16 @@
   border-radius: 0.25rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #667eea;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.preview-indicator {
+  background: #f9ca24;
+  color: #1a1a1a;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   min-width: 60px;
   text-align: center;
 }

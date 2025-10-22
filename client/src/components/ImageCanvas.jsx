@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ImageCanvas.css';
 
-function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced }) {
+function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreviewImage }) {
   const [activeImage, setActiveImage] = useState(null);
   const [tokens, setTokens] = useState([]);
   const [scale, setScale] = useState(1);
@@ -14,6 +14,9 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced }) {
   const [contextMenu, setContextMenu] = useState(null);
   const containerRef = useRef(null);
   const imageRef = useRef(null);
+
+  // Determine which image to display (preview takes priority for GM)
+  const displayImage = gmPreviewImage || activeImage;
 
   // Fetch active image and tokens on mount
   useEffect(() => {
@@ -251,23 +254,24 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced }) {
     setPosition({ x: 0, y: 0 });
   };
 
-  if (!activeImage) {
+  if (!displayImage) {
     return (
       <div className="image-canvas no-image">
         <div className="no-image-message">
           <h3>No Active Image</h3>
-          <p>The GM hasn't selected an image yet</p>
+          <p>{gmPreviewImage !== undefined ? 'Select an image to preview or activate' : 'The GM hasn\'t selected an image yet'}</p>
         </div>
       </div>
     );
   }
 
-  const activeTokens = tokens.filter(t => t.image_id === activeImage.id);
+  // Only show tokens for the active image (not for previews)
+  const activeTokens = tokens.filter(t => t.image_id === displayImage.id);
 
   return (
     <div
       ref={containerRef}
-      className={`image-canvas ${isDraggingCanvas ? 'dragging' : ''} ${pendingToken ? 'placing-token' : ''}`}
+      className={`image-canvas ${isDraggingCanvas ? 'dragging' : ''} ${pendingToken ? 'placing-token' : ''} ${gmPreviewImage ? 'preview-mode' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
@@ -281,6 +285,9 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced }) {
           Reset View
         </button>
         <span className="zoom-level">{Math.round(scale * 100)}%</span>
+        {gmPreviewImage && (
+          <span className="preview-indicator">Preview Mode</span>
+        )}
       </div>
 
       <div
@@ -291,8 +298,8 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced }) {
       >
         <img
           ref={imageRef}
-          src={`/uploads/${activeImage.file_path}`}
-          alt={activeImage.name}
+          src={`/uploads/${displayImage.file_path}`}
+          alt={displayImage.name}
           draggable={false}
           onLoad={() => {
             if (containerRef.current && imageRef.current) {
