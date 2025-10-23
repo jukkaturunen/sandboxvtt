@@ -114,22 +114,37 @@ A minimal online Virtual Table Top (VTT) application for playing role-playing ga
 - **FR-5.15**: Tokens remain associated with specific images
 - **FR-5.16**: Tokens reappear when their associated image becomes active
 
-### 3.6 Chat System
+### 3.6 Right Panel Interface
 
-#### 3.6.1 Chat Interface
-- **FR-6.1**: Chat panel on right side, below token panel
-- **FR-6.2**: Scrollable message history
-- **FR-6.3**: Text input field for new messages
-- **FR-6.4**: Accessible to all user roles
+#### 3.6.1 Tabbed Interface
+- **FR-6.1**: Right panel uses tabbed navigation for different functions
+- **FR-6.2**: Three tabs: Tokens, Chat, and Players
+- **FR-6.3**: Tab names displayed with small uppercase font
+- **FR-6.4**: Active tab highlighted with turquoise accent color
 
-#### 3.6.2 Message Display
-- **FR-6.5**: Messages identified by sender's character name (for players)
-- **FR-6.6**: Messages identified as "Game Master" (for GM)
-- **FR-6.7**: Messages display in chronological order
+#### 3.6.2 Tokens Tab
+- **FR-6.5**: Token creation interface accessible to all user roles
+- **FR-6.6**: Color selector for tokens (10 color options)
+- **FR-6.7**: Text field for token name tag
+- **FR-6.8**: "Click on Map to Place" button to activate placement mode
+- **FR-6.9**: Instructions text explaining token usage
 
-#### 3.6.3 Chat Persistence
-- **FR-6.8**: Chat messages persist across sessions
-- **FR-6.9**: Message history loads when joining sandbox
+#### 3.6.3 Chat Tab
+- **FR-6.10**: Scrollable message history
+- **FR-6.11**: Text input field for new messages
+- **FR-6.12**: Messages identified by sender's character name (for players)
+- **FR-6.13**: Messages identified as "Game Master" (for GM)
+- **FR-6.14**: Messages display in chronological order with timestamps
+- **FR-6.15**: Chat messages persist across sessions
+- **FR-6.16**: Message history loads when joining sandbox
+
+#### 3.6.4 Players Tab
+- **FR-6.17**: Display list of all connected players in real-time
+- **FR-6.18**: Show player count (e.g., "3 Players Connected")
+- **FR-6.19**: Each player entry shows circular avatar with first letter of name
+- **FR-6.20**: Display player name and role (Game Master or Player)
+- **FR-6.21**: List updates instantly when players join or leave
+- **FR-6.22**: Players see themselves in the list
 
 ### 3.7 GM Control Panel
 
@@ -165,20 +180,33 @@ A minimal online Virtual Table Top (VTT) application for playing role-playing ga
 - **RT-2**: Token creation, movement, and deletion
 - **RT-3**: Chat messages
 - **RT-4**: Image uploads (appear in GM's list)
+- **RT-5**: Player join/leave events
+- **RT-6**: Connected player list updates
 
 ### 4.2 Performance Requirements
-- **RT-5**: Updates must sync across all clients within 1-2 seconds
-- **RT-6**: Implement optimistic UI updates with server confirmation
+- **RT-7**: Updates must sync across all clients within 1-2 seconds
+- **RT-8**: Implement optimistic UI updates with server confirmation
+- **RT-9**: Player list updates occur instantly (< 500ms)
 
 ### 4.3 Connection Management
-- **RT-7**: Handle network disconnections gracefully
-- **RT-8**: Implement automatic reconnection logic
-- **RT-9**: Maintain session state during temporary disconnections
-- **RT-10**: Restore synchronized state when reconnecting
+- **RT-10**: Handle network disconnections gracefully
+- **RT-11**: Implement automatic reconnection logic
+- **RT-12**: Maintain session state during temporary disconnections
+- **RT-13**: Restore synchronized state when reconnecting
+- **RT-14**: Display real-time connection status indicator
+- **RT-15**: Automatically rejoin sandbox room on reconnection
 
-### 4.4 Architecture
-- **RT-11**: Event-driven architecture for state changes
-- **RT-12**: WebSocket-based communication layer
+### 4.4 Player Tracking
+- **RT-16**: Track all connected players per sandbox
+- **RT-17**: Store player socket ID, name, role, and join time
+- **RT-18**: Broadcast player list to all clients on join/leave
+- **RT-19**: Support on-demand player list requests
+- **RT-20**: Clean up player data on disconnect
+
+### 4.5 Architecture
+- **RT-21**: Event-driven architecture for state changes
+- **RT-22**: WebSocket-based communication layer (Socket.io)
+- **RT-23**: Room-based architecture for sandbox isolation
 
 ---
 
@@ -208,22 +236,28 @@ A minimal online Virtual Table Top (VTT) application for playing role-playing ga
 ### 6.1 Layout Structure
 - **UI-1**: Responsive canvas for image display (center)
 - **UI-2**: GM control panel (left side, GM only)
-- **UI-3**: Token panel (floating, upper right)
-- **UI-4**: Chat panel (right side, below token panel)
+- **UI-3**: Right panel with tabbed interface (Tokens, Chat, Players)
+- **UI-4**: Dark color scheme (shades of black, grey, and turquoise)
 
 ### 6.2 Visual Feedback
 - **UI-5**: Loading indicators for image uploads
-- **UI-6**: Copy confirmation notifications
+- **UI-6**: Copy confirmation notifications (toast)
 - **UI-7**: Active image highlighting
-- **UI-8**: Connection status indicator
+- **UI-8**: Connection status indicator (Connected/Disconnected)
 - **UI-9**: Popup modal for character name input
+- **UI-10**: Tab highlighting with turquoise accent
+- **UI-11**: Hover effects on interactive elements
+- **UI-12**: Player avatars with turquoise gradient
+- **UI-13**: Smooth animations for tab transitions
 
 ### 6.3 Interaction Patterns
-- **UI-10**: Right-click context menu for tokens
-- **UI-11**: Click-to-copy for invite links
-- **UI-12**: Drag-and-drop or click for token placement
-- **UI-13**: Drag for panning images
-- **UI-14**: Mouse wheel or pinch for zooming
+- **UI-14**: Right-click context menu for tokens
+- **UI-15**: Click-to-copy for invite links
+- **UI-16**: Drag-and-drop or click for token placement
+- **UI-17**: Drag for panning images
+- **UI-18**: Mouse wheel or pinch for zooming
+- **UI-19**: Click tabs to switch between Tokens, Chat, and Players
+- **UI-20**: Real-time updates without page refresh
 
 ---
 
@@ -285,6 +319,9 @@ The implementation will be considered successful when:
 3. GM can upload images and control active view
 4. All users can create, move, and delete tokens
 5. All users can send and receive chat messages
-6. All actions sync in real-time across all connected clients
-7. Sandbox state persists between sessions
-8. Returning users automatically reconnect without re-entering info
+6. All users can see connected players in real-time
+7. All actions sync in real-time across all connected clients
+8. Sandbox state persists between sessions
+9. Returning users automatically reconnect without re-entering info
+10. Connection status updates properly on connect/disconnect/reconnect
+11. Player list updates instantly when players join or leave

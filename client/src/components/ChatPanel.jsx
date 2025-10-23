@@ -89,10 +89,6 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
 
   return (
     <div className="chat-panel">
-      <div className="chat-header">
-        <h3>Chat</h3>
-      </div>
-
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-empty">No messages yet. Start the conversation!</div>

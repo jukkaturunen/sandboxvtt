@@ -1,14 +1,9 @@
 .token-panel {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-bottom: 1px solid #ddd;
-  min-height: 200px;
-}
-
-.token-panel h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #333;
+  background: #2c3e50;
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  color: #ecf0f1;
 }
 
 .token-form {
@@ -19,7 +14,9 @@
 
 .token-name-input {
   padding: 0.6rem;
-  border: 1px solid #ddd;
+  background: #34495e;
+  color: white;
+  border: 1px solid #4a5f7f;
   border-radius: 0.25rem;
   font-size: 0.9rem;
   transition: border-color 0.2s;
@@ -27,7 +24,11 @@
 
 .token-name-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4ecdc4;
+}
+
+.token-name-input::placeholder {
+  color: #95a5a6;
 }
 
 .color-picker {
@@ -79,12 +80,12 @@
 .token-instructions {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #34495e;
 }
 
 .token-instructions p {
   margin: 0;
   font-size: 0.85rem;
-  color: #666;
+  color: #95a5a6;
   line-height: 1.4;
 }

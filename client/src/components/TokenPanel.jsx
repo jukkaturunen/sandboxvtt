@@ -40,8 +40,6 @@ function TokenPanel({ onCreateToken }) {
 
   return (
     <div className="token-panel">
-      <h3>Tokens</h3>
-
       <div className="token-form">
         <input
           type="text"

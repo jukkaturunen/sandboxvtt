@@ -1,31 +1,79 @@
 const db = require('./database');
 
+// Store connected players per sandbox
+const sandboxPlayers = new Map(); // Map<sandboxId, Map<socketId, playerInfo>>
+
 // Initialize socket event handlers
 function initializeSocketEvents(io) {
   io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
-    // Join a sandbox room
-    socket.on('join-sandbox', (sandboxId) => {
+    // Join a sandbox room with player info
+    socket.on('join-sandbox', ({ sandboxId, playerName, role }) => {
       socket.join(sandboxId);
-      console.log(`Socket ${socket.id} joined sandbox ${sandboxId}`);
-      
-      // Notify others in the room
-      socket.to(sandboxId).emit('user-joined', {
+      console.log(`Socket ${socket.id} joined sandbox ${sandboxId} as ${playerName} (${role})`);
+
+      // Initialize sandbox player map if needed
+      if (!sandboxPlayers.has(sandboxId)) {
+        sandboxPlayers.set(sandboxId, new Map());
+      }
+
+      // Store player info
+      const playerInfo = {
         socketId: socket.id,
-        timestamp: new Date().toISOString()
-      });
+        name: playerName || 'Anonymous',
+        role: role || 'player',
+        joinedAt: new Date().toISOString()
+      };
+      sandboxPlayers.get(sandboxId).set(socket.id, playerInfo);
+
+      // Broadcast updated player list to all players in the room
+      const players = Array.from(sandboxPlayers.get(sandboxId).values());
+      io.to(sandboxId).emit('players-list', players);
+
+      // Also notify others with player-joined event for optional handling
+      socket.to(sandboxId).emit('player-joined', playerInfo);
+    });
+
+    // Request current players list
+    socket.on('request-players-list', () => {
+      // Find which sandbox this socket is in
+      for (const [sandboxId, players] of sandboxPlayers.entries()) {
+        if (players.has(socket.id)) {
+          const playersList = Array.from(players.values());
+          console.log(`Sending player list to ${socket.id}:`, playersList);
+          socket.emit('players-list', playersList);
+          break;
+        }
+      }
     });
 
     // Leave a sandbox room
     socket.on('leave-sandbox', (sandboxId) => {
       socket.leave(sandboxId);
       console.log(`Socket ${socket.id} left sandbox ${sandboxId}`);
-      
-      socket.to(sandboxId).emit('user-left', {
-        socketId: socket.id,
-        timestamp: new Date().toISOString()
-      });
+
+      // Remove player from tracking
+      if (sandboxPlayers.has(sandboxId)) {
+        const playerInfo = sandboxPlayers.get(sandboxId).get(socket.id);
+        sandboxPlayers.get(sandboxId).delete(socket.id);
+
+        // Send updated player list to remaining players
+        const remainingPlayers = Array.from(sandboxPlayers.get(sandboxId).values());
+        io.to(sandboxId).emit('players-list', remainingPlayers);
+
+        // Clean up empty sandbox maps
+        if (sandboxPlayers.get(sandboxId).size === 0) {
+          sandboxPlayers.delete(sandboxId);
+        }
+
+        // Also notify with player-left event
+        socket.to(sandboxId).emit('player-left', {
+          socketId: socket.id,
+          name: playerInfo?.name || 'Unknown',
+          timestamp: new Date().toISOString()
+        });
+      }
     });
 
     // ========== IMAGE EVENTS ==========
@@ -86,6 +134,30 @@ function initializeSocketEvents(io) {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
+
+      // Remove player from all sandboxes they were in
+      for (const [sandboxId, players] of sandboxPlayers.entries()) {
+        if (players.has(socket.id)) {
+          const playerInfo = players.get(socket.id);
+          players.delete(socket.id);
+
+          // Send updated player list to remaining players
+          const remainingPlayers = Array.from(players.values());
+          io.to(sandboxId).emit('players-list', remainingPlayers);
+
+          // Also notify with player-left event
+          io.to(sandboxId).emit('player-left', {
+            socketId: socket.id,
+            name: playerInfo?.name || 'Unknown',
+            timestamp: new Date().toISOString()
+          });
+
+          // Clean up empty sandbox maps
+          if (players.size === 0) {
+            sandboxPlayers.delete(sandboxId);
+          }
+        }
+      }
     });
 
     socket.on('error', (error) => {

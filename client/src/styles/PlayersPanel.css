@@ -1,0 +1,78 @@
+.players-panel {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.players-count {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #34495e;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.no-players {
+  text-align: center;
+  color: #95a5a6;
+  font-style: italic;
+  font-size: 0.9rem;
+  padding: 2rem 1rem;
+}
+
+.player-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #34495e;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.player-item:hover {
+  background: #3d5a7c;
+}
+
+.player-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1a252f;
+  flex-shrink: 0;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ecf0f1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-role {
+  font-size: 0.8rem;
+  color: #95a5a6;
+  margin-top: 0.1rem;
+}

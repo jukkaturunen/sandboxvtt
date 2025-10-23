@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Suppress EPIPE errors from WebSocket proxy (they're harmless reconnection events)
+// Suppress WebSocket proxy errors (they're harmless reconnection events)
 const originalConsoleError = console.error;
 console.error = (...args) => {
   const errorMessage = args.join(' ');
-  if (errorMessage.includes('EPIPE') && errorMessage.includes('ws proxy error')) {
-    // Suppress EPIPE WebSocket proxy errors
+  // Suppress all WebSocket proxy errors related to connection issues
+  if (errorMessage.includes('ws proxy') ||
+      (errorMessage.includes('proxy error') && (errorMessage.includes('EPIPE') || errorMessage.includes('ECONNRESET')))) {
     return;
   }
   originalConsoleError.apply(console, args);
@@ -32,8 +33,8 @@ export default defineConfig({
         // Handle proxy errors silently
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
-            // Silently ignore EPIPE errors (normal WebSocket reconnection)
-            if (err.code !== 'EPIPE') {
+            // Silently ignore connection errors (normal WebSocket reconnection)
+            if (err.code !== 'EPIPE' && err.code !== 'ECONNRESET') {
               console.log('proxy error', err);
             }
           });

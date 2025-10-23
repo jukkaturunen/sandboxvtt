@@ -130,36 +130,7 @@
   position: relative;
 }
 
-/* Right Panel - Tokens and Chat */
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-left: 1px solid #ddd;
-  overflow: hidden;
-  height: 100vh;
-}
-
-.token-panel {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-bottom: 1px solid #ddd;
-  flex-shrink: 0;
-}
-
-.token-panel h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #333;
-}
-
-/* Chat panel container wrapper */
-.right-panel > div:last-child {
-  flex: 1;
-  min-height: 0;
-  padding: 1rem;
-  overflow: hidden;
-}
+/* Right Panel styling moved to RightPanel.css */
 
 /* Layout for players (no GM panel) */
 .sandbox-layout:not(:has(.gm-panel)) {

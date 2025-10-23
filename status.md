@@ -1,6 +1,6 @@
 # SandboxVTT - Implementation Status
 
-**Last Updated**: 2025-10-21
+**Last Updated**: 2025-10-23
 
 ---
 
@@ -16,12 +16,12 @@
 | Phase 5: Image Management | ✅ Complete | 100% | Upload, list, activate, preview |
 | Phase 6: Image Display | ✅ Complete | 100% | Canvas with zoom/pan done |
 | Phase 7: Token System | ✅ Complete | 100% | All token features working |
-| Phase 8: Chat System | ✅ Complete | 100% | All chat features working |
-| Phase 9: Link Sharing | ✅ Complete | 100% | Toast notifications added |
+| Phase 8: Right Panel Tabbed UI | ✅ Complete | 100% | Tokens, Chat, Players tabs |
+| Phase 9: Player Tracking | ✅ Complete | 100% | Real-time player list |
 | Phase 10: Polish & Error Handling | ✅ Complete | 100% | All improvements done |
 | Phase 11: Testing & Deployment | ⏳ Not Started | 0% | - |
 
-**Overall Completion**: 11/11 phases (100%)
+**Overall Completion**: 10/11 phases (100%)
 
 ---
 
@@ -82,28 +82,88 @@
 - [x] Auto-dismiss notification after 3 seconds
 - [x] Display appropriate message for GM vs Player link
 
+### Previous Phase (Phase 9) - COMPLETED ✅
+
+**Real-Time Player Tracking** - Fully functional player list with real-time updates
+
+#### 9.1 Backend Player Tracking
+- [x] Added sandboxPlayers Map to server for tracking connected players
+- [x] Enhanced join-sandbox event to accept {sandboxId, playerName, role}
+- [x] Store player info: socketId, name, role, joinedAt timestamp
+- [x] Broadcast updated player list on join/leave/disconnect events
+- [x] Implemented request-players-list event for on-demand list requests
+- [x] Clean up player data on disconnect with proper room cleanup
+- [x] Fixed WebSocket proxy errors (EPIPE, ECONNRESET) suppression
+
+#### 9.2 Frontend Integration
+- [x] Updated useSocket hook to accept playerName and role parameters
+- [x] Pass characterName and role from SandboxPage to useSocket
+- [x] Created PlayersPanel component with real-time player list
+- [x] Register event listener and request player list on mount
+- [x] Display player count header (e.g., "3 Players Connected")
+- [x] Show circular avatars with first letter of player name
+- [x] Display player name and role (Game Master or Player)
+- [x] Fixed timing issue - players now see themselves in the list
+
+#### 9.3 Connection Status Improvements
+- [x] Enhanced connection status indicator with real-time updates
+- [x] Added handleConnect, handleDisconnect, handleReconnect functions
+- [x] Automatically rejoin sandbox room on reconnection
+- [x] Proper cleanup of event listeners to prevent memory leaks
+- [x] Connection status updates immediately on state changes
+
 ### Previous Phase (Phase 8) - COMPLETED ✅
 
-#### 8.1 Chat UI
-- [x] Create ChatPanel component
-- [x] Scrollable message container
+**Tabbed Right Panel Interface** - Clean, organized UI with dark theme
+
+#### 8.1 Tabbed Navigation
+- [x] Created RightPanel component with tab navigation
+- [x] Implemented three tabs: Tokens, Chat, Players
+- [x] Styled tabs with small uppercase font (0.85rem)
+- [x] Added active tab highlighting with turquoise accent (#4ecdc4)
+- [x] Removed individual panel headings (tabs provide context)
+- [x] Smooth fade-in animations when switching tabs
+
+#### 8.2 Tokens Tab
+- [x] Moved TokenPanel into tabbed structure
+- [x] Updated styling to match dark theme (#2c3e50 background)
+- [x] Color picker and input work seamlessly in tabbed layout
+- [x] Instructions text styled with muted grey (#95a5a6)
+
+#### 8.3 Chat Tab
+- [x] Created ChatPanel component with dark theme
+- [x] Scrollable message container with custom scrollbar
 - [x] Message input field and Send button
-- [x] Empty state message
+- [x] Empty state message ("No messages yet...")
 - [x] Auto-scroll to bottom on new messages
-
-#### 8.2 Message Display
-- [x] Display sender name and timestamp
+- [x] Display sender name (turquoise) and timestamp (grey)
 - [x] Format timestamps (today shows time, older shows date)
-- [x] Style messages with sender highlighting
+- [x] Style messages with dark cards (#34495e)
 - [x] Smooth slide-in animation for new messages
+- [x] Send messages via Enter key or Send button
+- [x] Message persistence and history loading
 
-#### 8.3 Sending Messages
-- [x] Send message via POST API
+#### 8.4 Players Tab
+- [x] Created PlayersPanel component (integrated in Phase 9)
+- [x] Prepared structure for real-time player tracking
+- [x] Placeholder replaced with functional player list
+
+#### 8.5 Dark Color Scheme
+- [x] Unified color scheme across all panels
+- [x] Background: #2c3e50 (dark blue-grey)
+- [x] Inputs/elements: #34495e (medium dark)
+- [x] Text: #ecf0f1 (light), #95a5a6 (muted)
+- [x] Accents: #4ecdc4 (turquoise)
+- [x] Matching GM panel colors for visual consistency
+- [x] Custom scrollbars styled to match theme
+
+#### 8.6 Chat Backend Integration
+- [x] POST message to /api/sandbox/:id/message
 - [x] Include sender_name and sender_role
 - [x] Clear input after sending
 - [x] Disable input/button when no character name set
 
-#### 8.4 Receiving Messages
+#### 8.7 Receiving Messages
 - [x] Listen for chat-message WebSocket event
 - [x] Add new messages to state
 - [x] Real-time updates across all clients

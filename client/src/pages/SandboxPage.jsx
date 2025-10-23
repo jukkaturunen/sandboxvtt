@@ -3,8 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import CharacterNameModal from '../components/CharacterNameModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
-import TokenPanel from '../components/TokenPanel';
-import ChatPanel from '../components/ChatPanel';
+import RightPanel from '../components/RightPanel';
 import useSocket from '../hooks/useSocket';
 import '../styles/SandboxPage.css';
 
@@ -20,7 +19,7 @@ function SandboxPage() {
   const [pendingToken, setPendingToken] = useState(null);
   const [previewImage, setPreviewImage] = useState(null); // GM-only preview
 
-  const { socket, isConnected } = useSocket(id);
+  const { socket, isConnected } = useSocket(id, characterName, role);
 
   // Check localStorage for existing character name
   useEffect(() => {
@@ -119,18 +118,14 @@ function SandboxPage() {
           </div>
         </div>
 
-        {/* Right Panel - Tokens and Chat */}
-        <div className="right-panel">
-          <TokenPanel
-            onCreateToken={(token) => setPendingToken(token)}
-          />
-          <ChatPanel
-            sandboxId={id}
-            socket={socket}
-            characterName={characterName}
-            role={role}
-          />
-        </div>
+        {/* Right Panel - Tabbed interface for Tokens, Chat, and Players */}
+        <RightPanel
+          sandboxId={id}
+          socket={socket}
+          characterName={characterName}
+          role={role}
+          onCreateToken={(token) => setPendingToken(token)}
+        />
       </div>
     </div>
   );

@@ -312,78 +312,101 @@ This implementation plan breaks down the SandboxVTT project into manageable phas
 
 ---
 
-## Phase 8: Chat System
+## Phase 8: Right Panel with Tabbed Interface
 
-**Goal**: Implement persistent chat with real-time messaging
+**Goal**: Implement tabbed interface for Tokens, Chat, and Players
 
 ### Tasks
 
-#### 8.1 Chat UI
-- [ ] Create chat panel (right side, below token panel)
-- [ ] Create scrollable message container
-- [ ] Create message input field
-- [ ] Add send button (or enter-to-send)
-- [ ] Style chat interface
+#### 8.1 Tabbed Navigation
+- [x] Create RightPanel component with tab navigation
+- [x] Implement three tabs: Tokens, Chat, Players
+- [x] Style tabs with small uppercase font
+- [x] Add active tab highlighting with turquoise accent
+- [x] Remove individual panel headings (tabs provide context)
 
-#### 8.2 Message Display
-- [ ] Fetch chat history from backend on load
-- [ ] Display messages in chronological order
-- [ ] Format messages with sender name
-- [ ] Differentiate GM vs player messages
-- [ ] Auto-scroll to latest message
+#### 8.2 Tokens Tab
+- [x] Move TokenPanel into tab structure
+- [x] Update styling to match dark theme
+- [x] Ensure color picker and input work in tabbed layout
 
-#### 8.3 Sending Messages
-- [ ] Capture input from text field
-- [ ] Send message to backend (save to DB)
-- [ ] Emit message via WebSocket
-- [ ] Clear input field after send
-- [ ] Handle enter key to send
+#### 8.3 Chat Tab
+- [x] Create chat panel (right side)
+- [x] Create scrollable message container
+- [x] Create message input field
+- [x] Add send button (or enter-to-send)
+- [x] Style chat interface with dark theme
+- [x] Fetch chat history from backend on load
+- [x] Display messages in chronological order
+- [x] Format messages with sender name and timestamp
+- [x] Differentiate GM vs player messages
+- [x] Auto-scroll to latest message
+- [x] Capture input from text field
+- [x] Send message to backend (save to DB)
+- [x] Emit message via WebSocket
+- [x] Clear input field after send
+- [x] Handle enter key to send
+- [x] Listen for incoming message events
+- [x] Store messages in database with sandbox_id
+- [x] Load message history on sandbox join
 
-#### 8.4 Receiving Messages
-- [ ] Listen for incoming message events
-- [ ] Append new messages to chat
-- [ ] Update scroll position
-- [ ] Handle message timestamps (optional)
+#### 8.4 Players Tab
+- [x] Create PlayersPanel component
+- [x] Display real-time list of connected players
+- [x] Show player count header
+- [x] Display circular avatars with first letter of name
+- [x] Show player name and role (GM/Player)
+- [x] Style with dark theme and turquoise accents
+- [x] Update list on join/leave events
 
-#### 8.5 Chat Persistence
-- [ ] Store messages in database with sandbox_id
-- [ ] Load message history on sandbox join
-- [ ] Display historical messages
+#### 8.5 Dark Color Scheme
+- [x] Update all panels to use dark theme
+- [x] Backgrounds: #2c3e50 (dark blue-grey)
+- [x] Inputs/elements: #34495e (medium dark)
+- [x] Text: #ecf0f1 (light), #95a5a6 (muted)
+- [x] Accents: #4ecdc4 (turquoise)
 
-**Deliverables**: Working chat system with persistence
+**Deliverables**: Tabbed interface with Tokens, Chat, and Players panels
 
 **Dependencies**: Phase 4
 
-**Estimated Time**: 4-5 hours
+**Estimated Time**: 8-10 hours
 
 ---
 
-## Phase 9: GM Link Sharing
+## Phase 9: Real-Time Player Tracking
 
-**Goal**: Implement invite link copying functionality
+**Goal**: Track and display connected players in real-time
 
 ### Tasks
 
-#### 9.1 Link Generation
-- [ ] Generate player invite URL (sandbox_id + role=player)
-- [ ] Generate GM URL (sandbox_id + role=gm)
-- [ ] Display links in GM panel (bottom)
+#### 9.1 Backend Player Tracking
+- [x] Add sandboxPlayers Map to track connected players
+- [x] Store player info (socketId, name, role, joinTime) on join
+- [x] Enhance join-sandbox event to accept player info
+- [x] Broadcast updated player list on join/leave/disconnect
+- [x] Clean up player data on disconnect
+- [x] Add request-players-list event handler
 
-#### 9.2 Copy to Clipboard
-- [ ] Implement clipboard API for player link
-- [ ] Implement clipboard API for GM link
-- [ ] Handle browser compatibility/permissions
+#### 9.2 Frontend Integration
+- [x] Update useSocket hook to send player name and role
+- [x] Pass characterName and role to useSocket
+- [x] PlayersPanel listens for players-list events
+- [x] Request player list on component mount
+- [x] Display players with avatars and role badges
 
-#### 9.3 Copy Confirmation
-- [ ] Show notification when link copied
-- [ ] Style notification (toast, banner, or inline)
-- [ ] Auto-dismiss notification after delay
+#### 9.3 Connection Status
+- [x] Add connection status indicator to UI
+- [x] Update status on connect/disconnect
+- [x] Handle reconnection properly
+- [x] Automatically rejoin room on reconnect
+- [x] Update player list on reconnection
 
-**Deliverables**: Link sharing functionality for GM
+**Deliverables**: Real-time player tracking and connection status
 
-**Dependencies**: Phase 4
+**Dependencies**: Phase 8
 
-**Estimated Time**: 2-3 hours
+**Estimated Time**: 6-8 hours
 
 ---
 

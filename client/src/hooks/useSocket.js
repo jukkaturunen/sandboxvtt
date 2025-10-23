@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-function useSocket(sandboxId) {
+function useSocket(sandboxId, playerName = null, role = 'player') {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -19,20 +19,42 @@ function useSocket(sandboxId) {
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    const handleConnect = () => {
       console.log('Socket connected:', socket.id);
       setIsConnected(true);
 
-      // Join the sandbox room
-      if (sandboxId) {
-        socket.emit('join-sandbox', sandboxId);
+      // Join the sandbox room with player info
+      if (sandboxId && playerName) {
+        socket.emit('join-sandbox', {
+          sandboxId,
+          playerName: playerName || 'Anonymous',
+          role: role || 'player'
+        });
       }
-    });
+    };
 
-    socket.on('disconnect', (reason) => {
+    const handleDisconnect = (reason) => {
       console.log('Socket disconnected:', reason);
       setIsConnected(false);
-    });
+    };
+
+    const handleReconnect = () => {
+      console.log('Socket reconnected');
+      setIsConnected(true);
+
+      // Rejoin the sandbox room after reconnection
+      if (sandboxId && playerName) {
+        socket.emit('join-sandbox', {
+          sandboxId,
+          playerName: playerName || 'Anonymous',
+          role: role || 'player'
+        });
+      }
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('reconnect', handleReconnect);
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
@@ -45,12 +67,16 @@ function useSocket(sandboxId) {
 
     // Cleanup on unmount
     return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('reconnect', handleReconnect);
+
       if (sandboxId) {
         socket.emit('leave-sandbox', sandboxId);
       }
       socket.disconnect();
     };
-  }, [sandboxId]);
+  }, [sandboxId, playerName, role]);
 
   return { socket: socketRef.current, isConnected };
 }
