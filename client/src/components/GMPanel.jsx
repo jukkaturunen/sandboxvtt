@@ -8,6 +8,7 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
   const [imageName, setImageName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [showShareLinks, setShowShareLinks] = useState(false);
 
   // Fetch images on mount
   useEffect(() => {
@@ -151,7 +152,7 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
       )}
 
       <div className="gm-panel-content">
-          {/* Image Upload Section */}
+        {/* Image Upload Section */}
         <div className="panel-section">
           <h4>Upload Image</h4>
           <input
@@ -244,15 +245,24 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
           )}
         </div>
 
-        {/* Share Links Section */}
-        <div className="panel-section">
-          <h4>Share Links</h4>
-          <button onClick={() => copyLink('gm')} className="link-button">
-            Copy GM Link
-          </button>
-          <button onClick={() => copyLink('player')} className="link-button">
-            Copy Player Link
-          </button>
+        {/* Share Links Section - At Bottom */}
+        <div className="panel-section share-links-section">
+          <h4
+            className="collapsible-header"
+            onClick={() => setShowShareLinks(!showShareLinks)}
+          >
+            Share Links {showShareLinks ? '▲' : '▼'}
+          </h4>
+          {showShareLinks && (
+            <div className="share-links-content">
+              <button onClick={() => copyLink('gm')} className="link-button">
+                Copy GM Link
+              </button>
+              <button onClick={() => copyLink('player')} className="link-button">
+                Copy Player Link
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
