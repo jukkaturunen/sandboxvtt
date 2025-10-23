@@ -4,6 +4,7 @@ import '../styles/FrontPage.css';
 
 function FrontPage() {
   const [isCreating, setIsCreating] = useState(false);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   const handleCreateSandbox = async () => {
@@ -21,23 +22,35 @@ function FrontPage() {
       }
 
       const data = await response.json();
-      
+
       // Redirect to sandbox page with GM role
       navigate(`/sandbox/${data.id}?role=gm`);
     } catch (error) {
       console.error('Error creating sandbox:', error);
-      alert('Failed to create sandbox. Please try again.');
+      showNotification('Failed to create sandbox. Please try again.');
     } finally {
       setIsCreating(false);
     }
   };
 
+  const showNotification = (message) => {
+    setNotification(message);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   return (
     <div className="front-page">
       <div className="front-page-container">
+        {/* Notification Toast */}
+        {notification && (
+          <div className="notification-toast">
+            {notification}
+          </div>
+        )}
+
         <h1 className="title">SandboxVTT</h1>
         <p className="subtitle">A minimal Virtual Table Top for quick RPG sessions</p>
-        
+
         <button
           className="create-button"
           onClick={handleCreateSandbox}

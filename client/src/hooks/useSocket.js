@@ -7,8 +7,11 @@ function useSocket(sandboxId) {
 
   useEffect(() => {
     // Connect to Socket.io server
-    const socket = io('http://localhost:3001', {
-      transports: ['websocket'],
+    // In development: Use Vite proxy (relative path)
+    // In production: Use environment variable or window.location.origin
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
