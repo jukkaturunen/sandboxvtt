@@ -34,26 +34,7 @@
   overflow: hidden;
 }
 
-/* GM Panel (Left) */
-.gm-panel {
-  background: #2c3e50;
-  color: white;
-  padding: 1.5rem;
-  overflow-y: auto;
-  border-right: 1px solid #34495e;
-}
-
-.gm-panel h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.2rem;
-  color: #ecf0f1;
-}
-
-.gm-panel h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  color: #bdc3c7;
-}
+/* GM Panel (Left) - styles moved to GMPanel.css */
 
 .panel-section {
   margin-bottom: 2rem;
@@ -79,13 +60,16 @@
 }
 
 .canvas-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1a252f;
   color: white;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid #34495e;
+  flex-shrink: 0;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .canvas-header h2 {
@@ -125,7 +109,7 @@
 
 .canvas-container {
   flex: 1;
-  background: #ecf0f1;
+  background: #4a5f7f;
   overflow: hidden;
   position: relative;
 }

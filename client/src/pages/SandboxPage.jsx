@@ -19,7 +19,7 @@ function SandboxPage() {
   const [pendingToken, setPendingToken] = useState(null);
   const [previewImage, setPreviewImage] = useState(null); // GM-only preview
 
-  const { socket, isConnected } = useSocket(id, characterName, role);
+  const { socket } = useSocket(id, characterName, role);
 
   // Check localStorage for existing character name
   useEffect(() => {
@@ -99,13 +99,7 @@ function SandboxPage() {
         {/* Main Canvas Area */}
         <div className="canvas-area">
           <div className="canvas-header">
-            <h2>SandboxVTT</h2>
-            <div className="connection-status">
-              <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
-                {isConnected ? '● Connected' : '○ Disconnected'}
-              </span>
-              <span className="role-badge">{role === 'gm' ? 'GM' : characterName}</span>
-            </div>
+            {/* Empty header bar */}
           </div>
           <div className="canvas-container">
             <ImageCanvas

@@ -254,6 +254,14 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     setPosition({ x: 0, y: 0 });
   };
 
+  const zoomIn = () => {
+    setScale(prev => Math.min(prev + 0.1, 5));
+  };
+
+  const zoomOut = () => {
+    setScale(prev => Math.max(prev - 0.1, 0.5));
+  };
+
   if (!displayImage) {
     return (
       <div className="image-canvas no-image">
@@ -284,7 +292,9 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
         <button onClick={resetView} className="reset-button" title="Reset View">
           Reset View
         </button>
+        <button onClick={zoomOut} className="zoom-button" title="Zoom Out">−</button>
         <span className="zoom-level">{Math.round(scale * 100)}%</span>
+        <button onClick={zoomIn} className="zoom-button" title="Zoom In">+</button>
         {gmPreviewImage && (
           <span className="preview-indicator">Preview Mode</span>
         )}

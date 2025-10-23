@@ -131,7 +131,10 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
 
   return (
     <div className="gm-panel">
-      <h3>GM Controls</h3>
+      {/* GM Panel Header */}
+      <div className="gm-panel-header">
+        <h3>GM Controls</h3>
+      </div>
 
       {/* Notification Toast */}
       {notification && (
@@ -140,98 +143,100 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
         </div>
       )}
 
-      {/* Image Upload Section */}
-      <div className="panel-section">
-        <h4>Upload Image</h4>
-        <input
-          id="image-upload-input"
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="file-input"
-        />
-        {selectedFile && (
-          <>
-            <input
-              type="text"
-              value={imageName}
-              onChange={(e) => setImageName(e.target.value)}
-              placeholder="Image name..."
-              className="image-name-input"
-            />
-            <button
-              onClick={handleUpload}
-              disabled={uploading || !imageName.trim()}
-              className="upload-button"
-            >
-              {uploading ? (
-                <>
-                  Uploading...
-                  <LoadingSpinner size="small" inline />
-                </>
-              ) : (
-                'Upload'
-              )}
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Image List Section */}
-      <div className="panel-section">
-        <div className="section-header">
-          <h4>Images ({images.length})</h4>
-          {previewImage && (
-            <button
-              onClick={handleReturnToActive}
-              className="return-to-active-button"
-              title="Return to active view"
-            >
-              ← Return to Active
-            </button>
+      <div className="gm-panel-content">
+          {/* Image Upload Section */}
+        <div className="panel-section">
+          <h4>Upload Image</h4>
+          <input
+            id="image-upload-input"
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="file-input"
+          />
+          {selectedFile && (
+            <>
+              <input
+                type="text"
+                value={imageName}
+                onChange={(e) => setImageName(e.target.value)}
+                placeholder="Image name..."
+                className="image-name-input"
+              />
+              <button
+                onClick={handleUpload}
+                disabled={uploading || !imageName.trim()}
+                className="upload-button"
+              >
+                {uploading ? (
+                  <>
+                    Uploading...
+                    <LoadingSpinner size="small" inline />
+                  </>
+                ) : (
+                  'Upload'
+                )}
+              </button>
+            </>
           )}
         </div>
-        {images.length === 0 ? (
-          <p className="no-images">No images uploaded yet</p>
-        ) : (
-          <div className="image-list">
-            {images.map((image) => (
-              <div
-                key={image.id}
-                className={`image-item ${image.is_active ? 'active' : ''}`}
-              >
-                <div className="image-info">
-                  <span
-                    className={`image-name clickable ${previewImage?.id === image.id ? 'previewing' : ''}`}
-                    onClick={() => handlePreview(image)}
-                    title="Click to preview"
-                  >
-                    {image.name}
-                  </span>
-                  {image.is_active && <span className="active-badge">Active</span>}
-                </div>
-                <button
-                  onClick={() => handleActivate(image.id)}
-                  className="activate-button"
-                  disabled={image.is_active}
-                >
-                  {image.is_active ? 'Current' : 'Activate'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Share Links Section */}
-      <div className="panel-section">
-        <h4>Share Links</h4>
-        <button onClick={() => copyLink('gm')} className="link-button">
-          Copy GM Link
-        </button>
-        <button onClick={() => copyLink('player')} className="link-button">
-          Copy Player Link
-        </button>
+        {/* Image List Section */}
+        <div className="panel-section">
+          <div className="section-header">
+            <h4>Images ({images.length})</h4>
+            {previewImage && (
+              <button
+                onClick={handleReturnToActive}
+                className="return-to-active-button"
+                title="Return to active view"
+              >
+                ← Return to Active
+              </button>
+            )}
+          </div>
+          {images.length === 0 ? (
+            <p className="no-images">No images uploaded yet</p>
+          ) : (
+            <div className="image-list">
+              {images.map((image) => (
+                <div
+                  key={image.id}
+                  className={`image-item ${image.is_active ? 'active' : ''}`}
+                >
+                  <div className="image-info">
+                    <span
+                      className={`image-name clickable ${previewImage?.id === image.id ? 'previewing' : ''}`}
+                      onClick={() => handlePreview(image)}
+                      title="Click to preview"
+                    >
+                      {image.name}
+                    </span>
+                    {image.is_active && <span className="active-badge">Active</span>}
+                  </div>
+                  <button
+                    onClick={() => handleActivate(image.id)}
+                    className="activate-button"
+                    disabled={image.is_active}
+                  >
+                    {image.is_active ? 'Current' : 'Activate'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Share Links Section */}
+        <div className="panel-section">
+          <h4>Share Links</h4>
+          <button onClick={() => copyLink('gm')} className="link-button">
+            Copy GM Link
+          </button>
+          <button onClick={() => copyLink('player')} className="link-button">
+            Copy Player Link
+          </button>
+        </div>
       </div>
     </div>
   );
