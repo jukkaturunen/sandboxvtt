@@ -57,6 +57,13 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
     }
   };
 
+  const handleCancelFile = () => {
+    setSelectedFile(null);
+    setImageName('');
+    const fileInput = document.getElementById('image-upload-input');
+    if (fileInput) fileInput.value = '';
+  };
+
   const handleUpload = async () => {
     if (!selectedFile || !imageName.trim()) return;
 
@@ -152,8 +159,20 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
             type="file"
             accept="image/*"
             onChange={handleFileSelect}
-            className="file-input"
+            className="file-input-hidden"
           />
+          {!selectedFile ? (
+            <label htmlFor="image-upload-input" className="file-link">
+              Choose file
+            </label>
+          ) : (
+            <div className="file-selected">
+              <span className="filename">{selectedFile.name}</span>
+              <button onClick={handleCancelFile} className="cancel-file" title="Cancel">
+                ×
+              </button>
+            </div>
+          )}
           {selectedFile && (
             <>
               <input
@@ -163,20 +182,20 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
                 placeholder="Image name..."
                 className="image-name-input"
               />
-              <button
-                onClick={handleUpload}
-                disabled={uploading || !imageName.trim()}
-                className="upload-button"
-              >
-                {uploading ? (
-                  <>
-                    Uploading...
-                    <LoadingSpinner size="small" inline />
-                  </>
-                ) : (
-                  'Upload'
-                )}
-              </button>
+              {uploading ? (
+                <div className="upload-link uploading">
+                  Uploading...
+                  <LoadingSpinner size="small" inline />
+                </div>
+              ) : (
+                <button
+                  onClick={handleUpload}
+                  disabled={!imageName.trim()}
+                  className="upload-link"
+                >
+                  Upload
+                </button>
+              )}
             </>
           )}
         </div>
