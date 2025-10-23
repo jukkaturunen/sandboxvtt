@@ -201,47 +201,45 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
         </div>
 
         {/* Image List Section */}
-        <div className="panel-section">
-          <div className="section-header">
-            <h4>Images ({images.length})</h4>
-            {previewImage && (
-              <button
-                onClick={handleReturnToActive}
-                className="return-to-active-button"
-                title="Return to active view"
-              >
-                ← Return to Active
-              </button>
-            )}
-          </div>
+        <div className="panel-section image-list-section">
+          <h4>Images</h4>
           {images.length === 0 ? (
             <p className="no-images">No images uploaded yet</p>
           ) : (
             <div className="image-list">
-              {images.map((image) => (
-                <div
-                  key={image.id}
-                  className={`image-item ${image.is_active ? 'active' : ''}`}
-                >
-                  <div className="image-info">
+              {images.map((image) => {
+                const isPreviewing = previewImage?.id === image.id;
+                return (
+                  <div
+                    key={image.id}
+                    className={`image-item ${image.is_active ? 'active' : ''}`}
+                  >
                     <span
-                      className={`image-name clickable ${previewImage?.id === image.id ? 'previewing' : ''}`}
+                      className={`image-name clickable ${isPreviewing ? 'previewing' : ''}`}
                       onClick={() => handlePreview(image)}
                       title="Click to preview"
                     >
                       {image.name}
                     </span>
-                    {image.is_active && <span className="active-badge">Active</span>}
+                    {isPreviewing ? (
+                      <button
+                        onClick={handleReturnToActive}
+                        className="activate-button exit-preview"
+                      >
+                        Exit
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleActivate(image.id)}
+                        className="activate-button"
+                        disabled={image.is_active}
+                      >
+                        {image.is_active ? 'Active' : 'Activate'}
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleActivate(image.id)}
-                    className="activate-button"
-                    disabled={image.is_active}
-                  >
-                    {image.is_active ? 'Current' : 'Activate'}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
