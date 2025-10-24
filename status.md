@@ -1,6 +1,6 @@
 # SandboxVTT - Implementation Status
 
-**Last Updated**: 2025-10-23
+**Last Updated**: 2025-10-24
 
 ---
 
@@ -386,8 +386,51 @@
 
 Phase 7-11 will be implemented next.
 
+### Recent Updates (2025-10-24)
+
+#### UI/UX Improvements
+- [x] Unified color scheme across all panels (GM, Canvas, Right Panel)
+- [x] All top bars now have matching height (44px) and color (#1a252f)
+- [x] GM Controls header styled to match right panel tabs
+- [x] Compact GM panel with reduced padding and centered section headers
+- [x] Canvas background changed to #4a5f7f for better contrast
+- [x] Zoom controls moved to bottom-right with dark theme styling
+- [x] Added +/- buttons for zoom control
+
+#### GM Panel Enhancements
+- [x] File upload redesigned with link-style interface
+  - "Choose file" displayed as underlined link (centered)
+  - Selected file shown with red × cancel button
+  - Upload button styled as smaller underlined link (centered)
+- [x] Image list section improvements
+  - Centered section headers without image count
+  - Each image with name and button on single line
+  - Smaller activate buttons with compact styling
+  - Active images show green background (#27ae60)
+  - Image names underlined to show they're clickable
+  - Preview mode shows "Exit" button in yellow text
+  - Removed "Return to Active" button (exit via image button)
+- [x] Share links section
+  - Fixed to bottom of GM panel
+  - Collapsible with click-to-toggle header
+  - Hidden by default with ▼/▲ indicator
+  - Reduced button padding (0.3rem)
+
+#### Token System Improvements
+- [x] Fixed token placement bug with coordinate system
+  - Added `imageLoaded` state to prevent position recalculation
+  - Fixed token hit detection to account for zoom scale
+  - Tokens now place correctly on first try
+- [x] Improved token creation workflow
+  - Name input auto-focuses when opening Tokens tab
+  - Button text changes: "Give Token a Name" → "Add to Map"
+  - Tokens auto-place at canvas center (no click needed)
+  - Selected color has white border (red default)
+  - Removed click-to-place workflow
+  - Updated instructions to reflect new workflow
+
 ### Current Status
-Phase 10 complete! Application is now polished with comprehensive error handling, input validation, loading states, accessibility features, and responsive design. All major features are production-ready. Ready for Phase 11 - Testing & Deployment.
+Phase 10 complete with extensive UI polish! Application features unified design, improved token system, and enhanced GM controls. All major features are production-ready with excellent UX. Ready for Phase 11 - Testing & Deployment.
 
 ---
 
@@ -405,6 +448,15 @@ Phase 10 complete! Application is now polished with comprehensive error handling
 ---
 
 ## Completed Milestones
+
+- **2025-10-24**: UI/UX Polish & Token System Improvements
+  - Unified color scheme and layout across all interface elements
+  - Compact GM panel with improved file upload and image management
+  - Fixed critical token placement bug
+  - Redesigned token creation for better UX (auto-place at center)
+  - Enhanced visual consistency with matching headers and styling
+  - Improved zoom controls with +/- buttons
+  - Collapsible share links section
 
 - **2025-10-22**: Phase 10 complete - Polish & Error Handling
   - Comprehensive error handling with toast notifications
