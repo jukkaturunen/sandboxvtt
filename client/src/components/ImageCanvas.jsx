@@ -12,6 +12,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [tokenDragStart, setTokenDragStart] = useState({ x: 0, y: 0 });
   const [contextMenu, setContextMenu] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef(null);
   const imageRef = useRef(null);
 
@@ -28,7 +29,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('active-view-changed', ({ imageId }) => {
+    socket.on('active-view-changed', () => {
       fetchActiveImage();
     });
 
@@ -65,6 +66,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
         setActiveImage(active);
         setScale(1);
         setPosition({ x: 0, y: 0 });
+        setImageLoaded(false);
       } else {
         setActiveImage(null);
       }
@@ -80,6 +82,40 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
       setTokens(data);
     } catch (error) {
       console.error('Error fetching tokens:', error);
+    }
+  };
+
+  // Handle pending token - place at center when token is created
+  useEffect(() => {
+    if (pendingToken && activeImage && imageRef.current) {
+      placeTokenAtCenter();
+    }
+  }, [pendingToken]);
+
+  const placeTokenAtCenter = async () => {
+    if (!activeImage || !imageRef.current || !pendingToken) return;
+
+    // Get the center of the image in image coordinates
+    const imageRect = imageRef.current.getBoundingClientRect();
+    const centerX = imageRect.width / 2 / scale;
+    const centerY = imageRect.height / 2 / scale;
+
+    try {
+      await fetch(`/api/sandbox/${sandboxId}/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_id: activeImage.id,
+          name: pendingToken.name,
+          color: pendingToken.color,
+          position_x: centerX,
+          position_y: centerY
+        })
+      });
+
+      onTokenPlaced();
+    } catch (error) {
+      console.error('Error creating token:', error);
     }
   };
 
@@ -108,9 +144,6 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
         tokenX: clickedToken.position_x,
         tokenY: clickedToken.position_y
       });
-    } else if (pendingToken) {
-      // Place new token
-      placeToken(e.clientX, e.clientY);
     } else {
       // Start dragging canvas
       setIsDraggingCanvas(true);
@@ -143,7 +176,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     }
   };
 
-  const handleMouseUp = async (e) => {
+  const handleMouseUp = async () => {
     if (isDraggingToken && draggedTokenId) {
       const token = tokens.find(t => t.id === draggedTokenId);
       if (token) {
@@ -199,7 +232,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
       const token = tokens[i];
       if (!activeImage || token.image_id !== activeImage.id) continue;
 
-      const tokenRadius = 20; // Token radius in pixels
+      const tokenRadius = 20 / scale; // Token radius accounting for scale
       const dx = x - token.position_x;
       const dy = y - token.position_y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -212,31 +245,6 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     return null;
   };
 
-  const placeToken = async (clientX, clientY) => {
-    if (!activeImage || !containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (clientX - rect.left - position.x) / scale;
-    const y = (clientY - rect.top - position.y) / scale;
-
-    try {
-      await fetch(`/api/sandbox/${sandboxId}/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_id: activeImage.id,
-          name: pendingToken.name,
-          color: pendingToken.color,
-          position_x: x,
-          position_y: y
-        })
-      });
-
-      onTokenPlaced();
-    } catch (error) {
-      console.error('Error creating token:', error);
-    }
-  };
 
   const deleteToken = async (tokenId) => {
     try {
@@ -312,13 +320,14 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
           alt={displayImage.name}
           draggable={false}
           onLoad={() => {
-            if (containerRef.current && imageRef.current) {
+            if (!imageLoaded && containerRef.current && imageRef.current) {
               const container = containerRef.current.getBoundingClientRect();
               const image = imageRef.current.getBoundingClientRect();
               setPosition({
                 x: (container.width - image.width) / 2,
                 y: (container.height - image.height) / 2
               });
+              setImageLoaded(true);
             }
           }}
         />

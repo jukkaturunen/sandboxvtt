@@ -51,9 +51,9 @@
 }
 
 .color-option.selected {
-  border-color: #333;
+  border-color: white;
   transform: scale(1.15);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .create-token-button {
