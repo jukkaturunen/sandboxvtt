@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/ImageCanvas.css';
 
-function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreviewImage }) {
+function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreviewImage, rightPanelCollapsed }) {
   const [activeImage, setActiveImage] = useState(null);
   const [tokens, setTokens] = useState([]);
   const [scale, setScale] = useState(1);
@@ -296,7 +296,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
       onContextMenu={handleContextMenu}
       onClick={() => setContextMenu(null)}
     >
-      <div className="canvas-controls">
+      <div className={`canvas-controls ${rightPanelCollapsed ? 'right-panel-collapsed' : ''}`}>
         <button onClick={resetView} className="reset-button" title="Reset View">
           Reset View
         </button>

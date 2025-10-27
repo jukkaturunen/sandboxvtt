@@ -116,6 +116,7 @@ function SandboxPage() {
               pendingToken={pendingToken}
               onTokenPlaced={() => setPendingToken(null)}
               gmPreviewImage={role === 'gm' ? previewImage : null}
+              rightPanelCollapsed={rightPanelCollapsed}
             />
           </div>
         </div>
