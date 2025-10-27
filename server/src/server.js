@@ -54,7 +54,8 @@ if (isProduction) {
   app.use(express.static(clientBuildPath));
 
   // Handle React Router - send all non-API requests to index.html
-  app.get('*', (req, res) => {
+  // Express 5 syntax: use regex pattern instead of '*'
+  app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 }
