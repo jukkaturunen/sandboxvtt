@@ -87,18 +87,8 @@ function SandboxPage() {
         <CharacterNameModal onSubmit={handleCharacterNameSubmit} />
       )}
 
-      <div className={`sandbox-layout ${leftPanelCollapsed ? 'left-collapsed' : ''} ${rightPanelCollapsed ? 'right-collapsed' : ''}`}>
-        {/* GM Panel - only visible to GM */}
-        {role === 'gm' && !leftPanelCollapsed && (
-          <GMPanel
-            sandboxId={id}
-            socket={socket}
-            onPreviewImage={(image) => setPreviewImage(image)}
-            previewImage={previewImage}
-          />
-        )}
-
-        {/* Main Canvas Area */}
+      <div className="sandbox-layout">
+        {/* Main Canvas Area - Full width background */}
         <div className="canvas-area">
           <div className="canvas-header">
             {/* Left collapse arrow - only show for GM */}
@@ -130,8 +120,20 @@ function SandboxPage() {
           </div>
         </div>
 
-        {/* Right Panel - Tabbed interface for Tokens, Chat, and Players */}
-        {!rightPanelCollapsed && (
+        {/* GM Panel - Floating on left (only for GM) */}
+        {role === 'gm' && (
+          <div className={`gm-panel-container ${leftPanelCollapsed ? 'collapsed' : ''}`}>
+            <GMPanel
+              sandboxId={id}
+              socket={socket}
+              onPreviewImage={(image) => setPreviewImage(image)}
+              previewImage={previewImage}
+            />
+          </div>
+        )}
+
+        {/* Right Panel - Floating on right */}
+        <div className={`right-panel-container ${rightPanelCollapsed ? 'collapsed' : ''}`}>
           <RightPanel
             sandboxId={id}
             socket={socket}
@@ -139,7 +141,7 @@ function SandboxPage() {
             role={role}
             onCreateToken={(token) => setPendingToken(token)}
           />
-        )}
+        </div>
       </div>
     </div>
   );

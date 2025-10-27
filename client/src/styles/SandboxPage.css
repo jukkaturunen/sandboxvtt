@@ -26,28 +26,12 @@
   color: #666;
 }
 
-/* Main Layout */
+/* Main Layout - Layered approach with floating panels */
 .sandbox-layout {
-  display: grid;
-  grid-template-columns: 250px 1fr 300px;
+  position: relative;
+  width: 100vw;
   height: 100vh;
   overflow: hidden;
-  transition: grid-template-columns 0.3s ease;
-}
-
-/* Layout when left panel is collapsed */
-.sandbox-layout.left-collapsed {
-  grid-template-columns: 0 1fr 300px;
-}
-
-/* Layout when right panel is collapsed */
-.sandbox-layout.right-collapsed {
-  grid-template-columns: 250px 1fr 0;
-}
-
-/* Layout when both panels are collapsed */
-.sandbox-layout.left-collapsed.right-collapsed {
-  grid-template-columns: 0 1fr 0;
 }
 
 /* GM Panel (Left) - styles moved to GMPanel.css */
@@ -68,11 +52,17 @@
   color: #95a5a6;
 }
 
-/* Canvas Area (Center) */
+/* Canvas Area (Center) - Full width, base layer */
 .canvas-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: white;
+  z-index: 1;
 }
 
 .canvas-header {
@@ -97,7 +87,7 @@
   flex: 1;
 }
 
-/* Collapse Arrows */
+/* Collapse Arrows - positioned absolutely to slide with panels */
 .collapse-arrow {
   background: none;
   border: none;
@@ -110,8 +100,11 @@
   width: 0;
   height: 0;
   border-style: solid;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, left 0.3s ease, right 0.3s ease;
   opacity: 0.7;
+  position: absolute;
+  top: calc(21.5px - 8px);
+  z-index: 25;
 }
 
 .collapse-arrow:hover {
@@ -122,14 +115,22 @@
   opacity: 0.5;
 }
 
+/* Left arrow positioning - slides with left panel */
 .collapse-arrow.left {
-  margin-left: 0.2rem;
-  margin-right: auto;
+  left: 250px;
 }
 
+.collapse-arrow.left.collapsed {
+  left: 10px;
+}
+
+/* Right arrow positioning - slides with right panel */
 .collapse-arrow.right {
-  margin-left: auto;
-  margin-right: 0.2rem;
+  right: 300px;
+}
+
+.collapse-arrow.right.collapsed {
+  right: 10px;
 }
 
 /* Triangle pointing left (hide left panel) */
@@ -193,47 +194,52 @@
   position: relative;
 }
 
-/* Right Panel styling moved to RightPanel.css */
+/* Floating Panels - positioned above canvas */
 
-/* Layout for players (no GM panel) */
-.sandbox-layout:not(:has(.gm-panel)) {
-  grid-template-columns: 1fr 300px;
+/* Left Panel (GM Panel) */
+.gm-panel-container {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  z-index: 10;
+  transition: transform 0.3s ease;
 }
 
-/* Layout for players when right panel is collapsed */
-.sandbox-layout:not(:has(.gm-panel)).right-collapsed {
-  grid-template-columns: 1fr 0;
+.gm-panel-container.collapsed {
+  transform: translateX(-240px); /* Leave 10px visible */
+}
+
+/* Right Panel */
+.right-panel-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  z-index: 10;
+  transition: transform 0.3s ease;
+}
+
+.right-panel-container.collapsed {
+  transform: translateX(290px); /* Leave 10px visible */
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .sandbox-layout {
-    grid-template-columns: 200px 1fr 280px;
-  }
-
-  .sandbox-layout:not(:has(.gm-panel)) {
-    grid-template-columns: 1fr 280px;
-  }
-}
-
 @media (max-width: 768px) {
-  .sandbox-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
-
-  .sandbox-layout:not(:has(.gm-panel)) {
-    grid-template-columns: 1fr;
-  }
-
   .gm-panel {
-    height: auto;
-    max-height: 40vh;
-    overflow-y: auto;
+    width: 200px;
   }
 
   .right-panel {
-    display: none; /* Hide tokens/chat on mobile - canvas takes priority */
+    width: 280px;
+  }
+
+  .gm-panel-container.collapsed {
+    transform: translateX(-190px);
+  }
+
+  .right-panel-container.collapsed {
+    transform: translateX(270px);
   }
 
   .canvas-header h2 {

@@ -5,6 +5,7 @@
   border-left: 1px solid #34495e;
   overflow: hidden;
   height: 100vh;
+  width: 300px;
 }
 
 /* Tab Navigation */

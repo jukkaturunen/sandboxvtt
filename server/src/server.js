@@ -12,15 +12,27 @@ const initializeSocketEvents = require('./socketEvents');
 
 const app = express();
 const server = http.createServer(app);
+
+// Determine client URL for CORS
+// In production, use SERVER_IP and PUBLIC_CLIENT_PORT to construct the client URL
+const isProduction = process.env.NODE_ENV === 'production';
+let clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+
+if (isProduction && process.env.SERVER_IP && process.env.PUBLIC_CLIENT_PORT) {
+  clientUrl = `http://${process.env.SERVER_IP}:${process.env.PUBLIC_CLIENT_PORT}`;
+}
+
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: clientUrl,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: clientUrl,
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -36,8 +48,22 @@ app.get('/api/health', (req, res) => {
 // Initialize Socket.io events
 initializeSocketEvents(io);
 
+// In production, serve the built React app
+if (isProduction) {
+  const clientBuildPath = path.join(__dirname, '../../client/dist');
+  app.use(express.static(clientBuildPath));
+
+  // Handle React Router - send all non-API requests to index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
+
 const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  if (isProduction) {
+    console.log(`Client accessible at: ${clientUrl}`);
+  }
 });

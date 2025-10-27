@@ -51,26 +51,45 @@ npm run server  # Server on port 3001
 npm run client  # Client on port 3000
 ```
 
-### Production
+### Production Build
 
 ```bash
 # Build client
-npm run build --prefix client
+npm run build
 
 # Start server
 npm start
 ```
 
+## Deployment
+
+For deploying to a production server (DigitalOcean, VPS, etc.), see the comprehensive **[DEPLOYMENT.md](DEPLOYMENT.md)** guide.
+
+Quick deployment overview:
+1. Set up your Ubuntu server with Node.js and PM2
+2. Configure `.env` with your server IP and port
+3. Run the deployment script: `bash deploy/deploy.sh`
+4. Access at `http://YOUR_IP:YOUR_PORT`
+
 ## API Endpoints
 
 - `GET /api/health` - Health check
+- See [server/src/routes.js](server/src/routes.js) for full API documentation
 
 ## Environment Variables
 
-See `.env` file for configuration options.
+See [.env.example](.env.example) file for configuration options.
+
+### Key Variables:
+- `NODE_ENV` - Environment mode (development/production)
+- `PORT` - Server port (default: 3001)
+- `SERVER_IP` - Your server IP (production only)
+- `PUBLIC_CLIENT_PORT` - Public access port (production only)
+- `DATABASE_PATH` - SQLite database location
 
 ## Documentation
 
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
 - [Requirements](requirements.md)
 - [Implementation Plan](implementation-plan.md)
 - [Status](status.md)
