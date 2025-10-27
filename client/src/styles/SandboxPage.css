@@ -32,6 +32,22 @@
   grid-template-columns: 250px 1fr 300px;
   height: 100vh;
   overflow: hidden;
+  transition: grid-template-columns 0.3s ease;
+}
+
+/* Layout when left panel is collapsed */
+.sandbox-layout.left-collapsed {
+  grid-template-columns: 0 1fr 300px;
+}
+
+/* Layout when right panel is collapsed */
+.sandbox-layout.right-collapsed {
+  grid-template-columns: 250px 1fr 0;
+}
+
+/* Layout when both panels are collapsed */
+.sandbox-layout.left-collapsed.right-collapsed {
+  grid-template-columns: 0 1fr 0;
 }
 
 /* GM Panel (Left) - styles moved to GMPanel.css */
@@ -62,19 +78,82 @@
 .canvas-header {
   background: #1a252f;
   color: white;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #34495e;
   flex-shrink: 0;
-  min-height: 44px;
+  height: 43px;
   box-sizing: border-box;
 }
 
 .canvas-header h2 {
   margin: 0;
   font-size: 1.3rem;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+/* Collapse Arrows */
+.collapse-arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  transition: opacity 0.2s;
+  opacity: 0.7;
+}
+
+.collapse-arrow:hover {
+  opacity: 1;
+}
+
+.collapse-arrow:active {
+  opacity: 0.5;
+}
+
+.collapse-arrow.left {
+  margin-left: 0.2rem;
+  margin-right: auto;
+}
+
+.collapse-arrow.right {
+  margin-left: auto;
+  margin-right: 0.2rem;
+}
+
+/* Triangle pointing left (hide left panel) */
+.collapse-arrow.left:not(.collapsed) {
+  border-width: 8px 12px 8px 0;
+  border-color: transparent white transparent transparent;
+}
+
+/* Triangle pointing right (show left panel) */
+.collapse-arrow.left.collapsed {
+  border-width: 8px 0 8px 12px;
+  border-color: transparent transparent transparent white;
+}
+
+/* Triangle pointing right (hide right panel) */
+.collapse-arrow.right:not(.collapsed) {
+  border-width: 8px 0 8px 12px;
+  border-color: transparent transparent transparent white;
+}
+
+/* Triangle pointing left (show right panel) */
+.collapse-arrow.right.collapsed {
+  border-width: 8px 12px 8px 0;
+  border-color: transparent white transparent transparent;
 }
 
 .connection-status {
@@ -119,6 +198,11 @@
 /* Layout for players (no GM panel) */
 .sandbox-layout:not(:has(.gm-panel)) {
   grid-template-columns: 1fr 300px;
+}
+
+/* Layout for players when right panel is collapsed */
+.sandbox-layout:not(:has(.gm-panel)).right-collapsed {
+  grid-template-columns: 1fr 0;
 }
 
 /* Responsive Design */

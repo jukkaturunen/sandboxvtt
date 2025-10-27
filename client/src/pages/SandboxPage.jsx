@@ -18,6 +18,8 @@ function SandboxPage() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
   const [previewImage, setPreviewImage] = useState(null); // GM-only preview
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
   const { socket } = useSocket(id, characterName, role);
 
@@ -85,9 +87,9 @@ function SandboxPage() {
         <CharacterNameModal onSubmit={handleCharacterNameSubmit} />
       )}
 
-      <div className="sandbox-layout">
+      <div className={`sandbox-layout ${leftPanelCollapsed ? 'left-collapsed' : ''} ${rightPanelCollapsed ? 'right-collapsed' : ''}`}>
         {/* GM Panel - only visible to GM */}
-        {role === 'gm' && (
+        {role === 'gm' && !leftPanelCollapsed && (
           <GMPanel
             sandboxId={id}
             socket={socket}
@@ -99,7 +101,23 @@ function SandboxPage() {
         {/* Main Canvas Area */}
         <div className="canvas-area">
           <div className="canvas-header">
-            {/* Empty header bar */}
+            {/* Left collapse arrow - only show for GM */}
+            {role === 'gm' && (
+              <button
+                className={`collapse-arrow left ${leftPanelCollapsed ? 'collapsed' : ''}`}
+                onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
+                title={leftPanelCollapsed ? "Show GM Panel" : "Hide GM Panel"}
+              />
+            )}
+
+            <div className="header-spacer"></div>
+
+            {/* Right collapse arrow */}
+            <button
+              className={`collapse-arrow right ${rightPanelCollapsed ? 'collapsed' : ''}`}
+              onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+              title={rightPanelCollapsed ? "Show Right Panel" : "Hide Right Panel"}
+            />
           </div>
           <div className="canvas-container">
             <ImageCanvas
@@ -113,13 +131,15 @@ function SandboxPage() {
         </div>
 
         {/* Right Panel - Tabbed interface for Tokens, Chat, and Players */}
-        <RightPanel
-          sandboxId={id}
-          socket={socket}
-          characterName={characterName}
-          role={role}
-          onCreateToken={(token) => setPendingToken(token)}
-        />
+        {!rightPanelCollapsed && (
+          <RightPanel
+            sandboxId={id}
+            socket={socket}
+            characterName={characterName}
+            role={role}
+            onCreateToken={(token) => setPendingToken(token)}
+          />
+        )}
       </div>
     </div>
   );
