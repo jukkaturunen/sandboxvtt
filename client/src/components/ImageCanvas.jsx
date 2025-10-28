@@ -92,6 +92,13 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     }
   }, [pendingToken]);
 
+  // When GM preview image changes, reset and center the new image
+  useEffect(() => {
+    if (gmPreviewImage) {
+      setImageLoaded(false);
+    }
+  }, [gmPreviewImage]);
+
   const placeTokenAtCenter = async () => {
     if (!activeImage || !imageRef.current || !pendingToken) return;
 
@@ -257,9 +264,43 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     }
   };
 
+  // Center and fit image to canvas
+  const centerAndFitImage = () => {
+    if (!containerRef.current || !imageRef.current) return;
+
+    const container = containerRef.current.getBoundingClientRect();
+    const image = imageRef.current;
+    const imageNaturalWidth = image.naturalWidth;
+    const imageNaturalHeight = image.naturalHeight;
+
+    // Calculate scale to fit image in container
+    const scaleX = container.width / imageNaturalWidth;
+    const scaleY = container.height / imageNaturalHeight;
+    const fitScale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
+
+    // The wrapper is positioned at (0,0) and transform-origin is "center center"
+    // This means scale is applied from the center of the natural image size
+    // After scaling, we need to translate so the image center is at container center
+
+    // Center of the image (at natural size, before scaling)
+    const imageCenterX = imageNaturalWidth / 2;
+    const imageCenterY = imageNaturalHeight / 2;
+
+    // Center of the container
+    const containerCenterX = container.width / 2;
+    const containerCenterY = container.height / 2;
+
+    // Position the wrapper so the image center aligns with container center
+    // We need to offset by the difference between centers
+    const centerX = containerCenterX - imageCenterX;
+    const centerY = containerCenterY - imageCenterY;
+
+    setScale(fitScale);
+    setPosition({ x: centerX, y: centerY });
+  };
+
   const resetView = () => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
+    centerAndFitImage();
   };
 
   const zoomIn = () => {
@@ -321,12 +362,7 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
           draggable={false}
           onLoad={() => {
             if (!imageLoaded && containerRef.current && imageRef.current) {
-              const container = containerRef.current.getBoundingClientRect();
-              const image = imageRef.current.getBoundingClientRect();
-              setPosition({
-                x: (container.width - image.width) / 2,
-                y: (container.height - image.height) / 2
-              });
+              centerAndFitImage();
               setImageLoaded(true);
             }
           }}
