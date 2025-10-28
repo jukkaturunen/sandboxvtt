@@ -197,6 +197,8 @@
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  /* Hidden for desktop, can be shown later for mobile */
+  display: none;
 }
 
 .chat-send-button:hover:not(:disabled) {
