@@ -3,6 +3,7 @@ import LoadingSpinner from './LoadingSpinner';
 import '../styles/GMPanel.css';
 
 function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
+  const [activeTab, setActiveTab] = useState('images');
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [imageName, setImageName] = useState('');
@@ -162,9 +163,23 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
 
   return (
     <div className="gm-panel">
-      {/* GM Panel Header */}
+      {/* GM Panel Header - No Title */}
       <div className="gm-panel-header">
-        <h3>GM Controls</h3>
+        {/* Tab Navigation */}
+        <div className="tab-navigation">
+          <button
+            className={`tab-button ${activeTab === 'images' ? 'active' : ''}`}
+            onClick={() => setActiveTab('images')}
+          >
+            Images
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'conf' ? 'active' : ''}`}
+            onClick={() => setActiveTab('conf')}
+          >
+            Conf
+          </button>
+        </div>
       </div>
 
       {/* Notification Toast */}
@@ -175,100 +190,113 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
       )}
 
       <div className="gm-panel-content">
-        {/* Image Upload Section */}
-        <div className="panel-section">
-          <h4>Upload Image</h4>
-          <input
-            id="image-upload-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="file-input-hidden"
-          />
-          {!selectedFile ? (
-            <label htmlFor="image-upload-input" className="file-link">
-              Choose file
-            </label>
-          ) : (
-            <div className="file-selected">
-              <span className="filename">{selectedFile.name}</span>
-              <button onClick={handleCancelFile} className="cancel-file" title="Cancel">
-                ×
-              </button>
-            </div>
-          )}
-          {selectedFile && (
-            <>
+        {/* Tab Content */}
+        <div className="tab-content">
+          {/* Images Tab */}
+          <div className={`tab-pane ${activeTab === 'images' ? 'active' : 'hidden'}`}>
+            {/* Image Upload Section */}
+            <div className="panel-section">
+              <h4>Upload Image</h4>
               <input
-                type="text"
-                value={imageName}
-                onChange={(e) => setImageName(e.target.value)}
-                placeholder="Image name..."
-                className="image-name-input"
+                id="image-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="file-input-hidden"
               />
-              {uploading ? (
-                <div className="upload-link uploading">
-                  Uploading...
-                  <LoadingSpinner size="small" inline />
-                </div>
+              {!selectedFile ? (
+                <label htmlFor="image-upload-input" className="file-link">
+                  Choose file
+                </label>
               ) : (
-                <button
-                  onClick={handleUpload}
-                  disabled={!imageName.trim()}
-                  className="upload-link"
-                >
-                  Upload
-                </button>
+                <div className="file-selected">
+                  <span className="filename">{selectedFile.name}</span>
+                  <button onClick={handleCancelFile} className="cancel-file" title="Cancel">
+                    ×
+                  </button>
+                </div>
               )}
-            </>
-          )}
-        </div>
-
-        {/* Image List Section */}
-        <div className="panel-section image-list-section">
-          <h4>Images</h4>
-          {images.length === 0 ? (
-            <p className="no-images">No images uploaded yet</p>
-          ) : (
-            <div className="image-list">
-              {images.map((image) => {
-                const isPreviewing = previewImage?.id === image.id;
-                return (
-                  <div
-                    key={image.id}
-                    className={`image-item ${image.is_active ? 'active' : ''}`}
-                  >
-                    <span
-                      className={`image-name clickable ${isPreviewing ? 'previewing' : ''}`}
-                      onClick={() => handlePreview(image)}
-                      title="Click to preview"
+              {selectedFile && (
+                <>
+                  <input
+                    type="text"
+                    value={imageName}
+                    onChange={(e) => setImageName(e.target.value)}
+                    placeholder="Image name..."
+                    className="image-name-input"
+                  />
+                  {uploading ? (
+                    <div className="upload-link uploading">
+                      Uploading...
+                      <LoadingSpinner size="small" inline />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleUpload}
+                      disabled={!imageName.trim()}
+                      className="upload-link"
                     >
-                      {image.name}
-                    </span>
-                    {isPreviewing ? (
-                      <button
-                        onClick={handleReturnToActive}
-                        className="activate-button exit-preview"
-                      >
-                        Exit
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleActivate(image.id)}
-                        className="activate-button"
-                        disabled={image.is_active}
-                      >
-                        {image.is_active ? 'Active' : 'Activate'}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                      Upload
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-          )}
+
+            {/* Image List Section */}
+            <div className="panel-section image-list-section">
+              <h4>Images</h4>
+              {images.length === 0 ? (
+                <p className="no-images">No images uploaded yet</p>
+              ) : (
+                <div className="image-list">
+                  {images.map((image) => {
+                    const isPreviewing = previewImage?.id === image.id;
+                    return (
+                      <div
+                        key={image.id}
+                        className={`image-item ${image.is_active ? 'active' : ''}`}
+                      >
+                        <span
+                          className={`image-name clickable ${isPreviewing ? 'previewing' : ''}`}
+                          onClick={() => handlePreview(image)}
+                          title="Click to preview"
+                        >
+                          {image.name}
+                        </span>
+                        {isPreviewing ? (
+                          <button
+                            onClick={handleReturnToActive}
+                            className="activate-button exit-preview"
+                          >
+                            Exit
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivate(image.id)}
+                            className="activate-button"
+                            disabled={image.is_active}
+                          >
+                            {image.is_active ? 'Active' : 'Activate'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Conf Tab */}
+          <div className={`tab-pane ${activeTab === 'conf' ? 'active' : 'hidden'}`}>
+            <div className="panel-section">
+              <p className="no-images">Configuration options coming soon...</p>
+            </div>
+          </div>
         </div>
 
-        {/* Share Links Section - At Bottom */}
+        {/* Share Links Section - At Bottom, Outside Tabs */}
         <div className="panel-section share-links-section">
           <h4
             className="collapsible-header"
