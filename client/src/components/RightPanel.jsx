@@ -7,6 +7,7 @@ import '../styles/RightPanel.css';
 function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
   const [activeTab, setActiveTab] = useState('tokens');
   const [players, setPlayers] = useState([]);
+  const [chatHasUnread, setChatHasUnread] = useState(false);
 
   // Listen for player list updates from socket
   useEffect(() => {
@@ -24,6 +25,13 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
     };
   }, [socket]);
 
+  // Clear chat unread indicator when switching to chat tab
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      setChatHasUnread(false);
+    }
+  }, [activeTab]);
+
   return (
     <div className="right-panel">
       {/* Tab Navigation */}
@@ -35,7 +43,7 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
           Tokens
         </button>
         <button
-          className={`tab-button ${activeTab === 'chat' ? 'active' : ''}`}
+          className={`tab-button ${activeTab === 'chat' ? 'active' : ''} ${chatHasUnread && activeTab !== 'chat' ? 'has-unread' : ''}`}
           onClick={() => setActiveTab('chat')}
         >
           Chat
@@ -50,29 +58,25 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
 
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === 'tokens' && (
-          <div className="tab-pane">
-            <TokenPanel onCreateToken={onCreateToken} />
-          </div>
-        )}
+        <div className={`tab-pane ${activeTab === 'tokens' ? 'active' : 'hidden'}`}>
+          <TokenPanel onCreateToken={onCreateToken} />
+        </div>
 
-        {activeTab === 'chat' && (
-          <div className="tab-pane">
-            <ChatPanel
-              sandboxId={sandboxId}
-              socket={socket}
-              characterName={characterName}
-              role={role}
-              players={players}
-            />
-          </div>
-        )}
+        <div className={`tab-pane ${activeTab === 'chat' ? 'active' : 'hidden'}`}>
+          <ChatPanel
+            sandboxId={sandboxId}
+            socket={socket}
+            characterName={characterName}
+            role={role}
+            players={players}
+            isActiveTab={activeTab === 'chat'}
+            onUnreadChange={setChatHasUnread}
+          />
+        </div>
 
-        {activeTab === 'players' && (
-          <div className="tab-pane">
-            <PlayersPanel socket={socket} />
-          </div>
-        )}
+        <div className={`tab-pane ${activeTab === 'players' ? 'active' : 'hidden'}`}>
+          <PlayersPanel socket={socket} />
+        </div>
       </div>
     </div>
   );

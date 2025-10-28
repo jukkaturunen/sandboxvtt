@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import '../styles/ChatPanel.css';
 
-function ChatPanel({ sandboxId, socket, characterName, role, players }) {
+function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTab, onUnreadChange }) {
   const [allMessages, setAllMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedChannel, setSelectedChannel] = useState('ALL');
@@ -27,31 +27,8 @@ function ChatPanel({ sandboxId, socket, characterName, role, players }) {
     loadMessages();
   }, [sandboxId, characterName]);
 
-  // Listen for new chat messages
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleChatMessage = (message) => {
-      setAllMessages(prev => [...prev, message]);
-
-      // Determine which channel this message belongs to
-      const messageChannel = getMessageChannel(message);
-
-      // If message is for a non-active channel, mark as unread
-      if (messageChannel !== selectedChannel) {
-        setUnreadChannels(prev => new Set([...prev, messageChannel]));
-      }
-    };
-
-    socket.on('chat-message', handleChatMessage);
-
-    return () => {
-      socket.off('chat-message', handleChatMessage);
-    };
-  }, [socket, selectedChannel, characterName]);
-
   // Determine which channel a message belongs to
-  const getMessageChannel = (message) => {
+  const getMessageChannel = useCallback((message) => {
     // ALL channel: recipient_name is null
     if (message.recipient_name === null) {
       return 'ALL';
@@ -66,7 +43,45 @@ function ChatPanel({ sandboxId, socket, characterName, role, players }) {
     }
 
     return null; // Message not for this user
-  };
+  }, [characterName]);
+
+  // Listen for new chat messages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleChatMessage = (message) => {
+      // Only process messages that are relevant to this user
+      const messageChannel = getMessageChannel(message);
+
+      // Ignore messages not meant for this user
+      if (messageChannel === null) {
+        return;
+      }
+
+      setAllMessages(prev => [...prev, message]);
+
+      // If chat tab is NOT active, always show tab indicator
+      if (!isActiveTab && onUnreadChange) {
+        onUnreadChange(true);
+      }
+
+      // If message is for a different channel than currently selected, mark channel as unread
+      // This works regardless of whether chat tab is active or not
+      if (messageChannel !== selectedChannel) {
+        setUnreadChannels(prev => {
+          const newSet = new Set(prev);
+          newSet.add(messageChannel);
+          return newSet;
+        });
+      }
+    };
+
+    socket.on('chat-message', handleChatMessage);
+
+    return () => {
+      socket.off('chat-message', handleChatMessage);
+    };
+  }, [socket, selectedChannel, isActiveTab, onUnreadChange, getMessageChannel]);
 
   // Filter messages based on selected channel
   const filteredMessages = useMemo(() => {
