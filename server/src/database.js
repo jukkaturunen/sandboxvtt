@@ -54,10 +54,22 @@ function initializeDatabase() {
       sender_name TEXT NOT NULL,
       sender_role TEXT NOT NULL,
       message TEXT NOT NULL,
+      recipient_name TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (sandbox_id) REFERENCES sandboxes(id) ON DELETE CASCADE
     )
   `);
+
+  // Add recipient_name column to existing tables (migration)
+  try {
+    db.exec(`ALTER TABLE chat_messages ADD COLUMN recipient_name TEXT`);
+    console.log('Added recipient_name column to chat_messages table');
+  } catch (error) {
+    // Column already exists, ignore error
+    if (!error.message.includes('duplicate column name')) {
+      console.error('Migration error:', error.message);
+    }
+  }
 
   console.log('Database initialized successfully');
 }
@@ -93,10 +105,20 @@ const deleteToken = db.prepare('DELETE FROM tokens WHERE id = ?');
 
 // Chat operations
 const createMessage = db.prepare(`
-  INSERT INTO chat_messages (sandbox_id, sender_name, sender_role, message)
-  VALUES (?, ?, ?, ?)
+  INSERT INTO chat_messages (sandbox_id, sender_name, sender_role, message, recipient_name)
+  VALUES (?, ?, ?, ?, ?)
 `);
 const getMessages = db.prepare('SELECT * FROM chat_messages WHERE sandbox_id = ? ORDER BY created_at ASC');
+const getMessagesForPlayer = db.prepare(`
+  SELECT * FROM chat_messages
+  WHERE sandbox_id = ?
+    AND (
+      recipient_name IS NULL
+      OR recipient_name = ?
+      OR sender_name = ?
+    )
+  ORDER BY created_at ASC
+`);
 
 module.exports = {
   db,
@@ -118,4 +140,5 @@ module.exports = {
   // Chat
   createMessage,
   getMessages,
+  getMessagesForPlayer,
 };

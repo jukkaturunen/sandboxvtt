@@ -1,6 +1,6 @@
 # SandboxVTT - Implementation Status
 
-**Last Updated**: 2025-10-27
+**Last Updated**: 2025-10-28
 
 ---
 
@@ -385,6 +385,39 @@
 ### Current Phase Tasks
 
 Phase 7-11 will be implemented next.
+
+### Recent Updates (2025-10-28)
+
+#### Production Deployment & Bug Fixes
+- [x] **Deployment Infrastructure**
+  - Created comprehensive deployment setup for DigitalOcean Ubuntu servers
+  - PM2 ecosystem configuration for process management
+  - Deployment scripts (setup.sh, deploy.sh) for one-command deployment
+  - Optional nginx reverse proxy configuration
+  - Complete DEPLOYMENT.md documentation (400+ lines)
+  - Environment configuration templates (.env.production, .env.example)
+  - Production build scripts added to package.json
+
+- [x] **Production Features**
+  - Configurable PUBLIC_CLIENT_PORT for flexible deployment
+  - Server serves built React app in production (NODE_ENV=production)
+  - Automatic CORS configuration based on SERVER_IP and port
+  - Express 5 compatibility fix for wildcard routes (regex pattern)
+  - Health check endpoint monitoring ready
+
+- [x] **Bug Fixes**
+  - Fixed canvas controls hidden under right panel (animated CSS right property)
+  - Fixed Express 5 wildcard route syntax error (changed '*' to regex)
+  - Fixed clipboard API for HTTP environments (fallback to document.execCommand)
+  - Share links now work in production without HTTPS
+
+- [x] **Image Positioning Improvements**
+  - Images now center properly on activation and reset
+  - Automatic zoom-to-fit calculation (scales to show full image)
+  - Works for both active images and GM preview mode
+  - Center-based positioning algorithm accounting for transform-origin
+  - Images never cropped - always fully visible on canvas
+  - GM preview images also center and fit automatically
 
 ### Recent Updates (2025-10-27)
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TokenPanel from './TokenPanel';
 import ChatPanel from './ChatPanel';
 import PlayersPanel from './PlayersPanel';
@@ -6,6 +6,23 @@ import '../styles/RightPanel.css';
 
 function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
   const [activeTab, setActiveTab] = useState('tokens');
+  const [players, setPlayers] = useState([]);
+
+  // Listen for player list updates from socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePlayersList = (playersList) => {
+      setPlayers(playersList);
+    };
+
+    socket.on('players-list', handlePlayersList);
+    socket.emit('request-players-list');
+
+    return () => {
+      socket.off('players-list', handlePlayersList);
+    };
+  }, [socket]);
 
   return (
     <div className="right-panel">
@@ -46,6 +63,7 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
               socket={socket}
               characterName={characterName}
               role={role}
+              players={players}
             />
           </div>
         )}

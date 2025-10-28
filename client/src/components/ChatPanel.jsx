@@ -1,19 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import '../styles/ChatPanel.css';
 
-function ChatPanel({ sandboxId, socket, characterName, role }) {
-  const [messages, setMessages] = useState([]);
+function ChatPanel({ sandboxId, socket, characterName, role, players }) {
+  const [allMessages, setAllMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [selectedChannel, setSelectedChannel] = useState('ALL');
+  const [unreadChannels, setUnreadChannels] = useState(new Set());
   const messagesEndRef = useRef(null);
 
+  // Load existing messages from database (filtered for current player)
   useEffect(() => {
-    // Load existing messages from database
     const loadMessages = async () => {
+      if (!characterName) return;
+
       try {
-        const response = await fetch(`/api/sandbox/${sandboxId}/messages`);
+        const response = await fetch(`/api/sandbox/${sandboxId}/messages?for_player=${encodeURIComponent(characterName)}`);
         if (response.ok) {
           const data = await response.json();
-          setMessages(data);
+          setAllMessages(data);
         }
       } catch (error) {
         console.error('Failed to load messages:', error);
@@ -21,14 +25,22 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
     };
 
     loadMessages();
-  }, [sandboxId]);
+  }, [sandboxId, characterName]);
 
+  // Listen for new chat messages
   useEffect(() => {
-    // Listen for new chat messages
     if (!socket) return;
 
     const handleChatMessage = (message) => {
-      setMessages(prev => [...prev, message]);
+      setAllMessages(prev => [...prev, message]);
+
+      // Determine which channel this message belongs to
+      const messageChannel = getMessageChannel(message);
+
+      // If message is for a non-active channel, mark as unread
+      if (messageChannel !== selectedChannel) {
+        setUnreadChannels(prev => new Set([...prev, messageChannel]));
+      }
     };
 
     socket.on('chat-message', handleChatMessage);
@@ -36,26 +48,73 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
     return () => {
       socket.off('chat-message', handleChatMessage);
     };
-  }, [socket]);
+  }, [socket, selectedChannel, characterName]);
 
+  // Determine which channel a message belongs to
+  const getMessageChannel = (message) => {
+    // ALL channel: recipient_name is null
+    if (message.recipient_name === null) {
+      return 'ALL';
+    }
+
+    // Private message: either sent to me or sent by me
+    if (message.recipient_name === characterName) {
+      return message.sender_name; // From sender
+    }
+    if (message.sender_name === characterName) {
+      return message.recipient_name; // To recipient
+    }
+
+    return null; // Message not for this user
+  };
+
+  // Filter messages based on selected channel
+  const filteredMessages = useMemo(() => {
+    if (selectedChannel === 'ALL') {
+      // Show only messages where recipient_name is null
+      return allMessages.filter(msg => msg.recipient_name === null);
+    } else {
+      // Show private messages between me and the selected player
+      return allMessages.filter(msg =>
+        (msg.sender_name === selectedChannel && msg.recipient_name === characterName) ||
+        (msg.sender_name === characterName && msg.recipient_name === selectedChannel)
+      );
+    }
+  }, [allMessages, selectedChannel, characterName]);
+
+  // Auto-scroll to bottom when filtered messages change
   useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [filteredMessages]);
 
+  // Handle channel selection
+  const handleChannelSelect = (channel) => {
+    setSelectedChannel(channel);
+    // Clear unread indicator for this channel
+    setUnreadChannels(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(channel);
+      return newSet;
+    });
+  };
+
+  // Handle sending message
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
     if (!newMessage.trim() || !characterName) return;
 
     try {
+      const recipientName = selectedChannel === 'ALL' ? null : selectedChannel;
+
       const response = await fetch(`/api/sandbox/${sandboxId}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sender_name: characterName,
           sender_role: role || 'player',
-          message: newMessage.trim()
+          message: newMessage.trim(),
+          recipient_name: recipientName
         })
       });
 
@@ -87,13 +146,44 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
     }
   };
 
+  // Build channel list: ALL + all other players
+  const availableChannels = useMemo(() => {
+    const channels = ['ALL'];
+    // Add all players except current user
+    players.forEach(player => {
+      if (player.name !== characterName) {
+        channels.push(player.name);
+      }
+    });
+    return channels;
+  }, [players, characterName]);
+
   return (
     <div className="chat-panel">
+      {/* Channel Pills Section */}
+      <div className="chat-channels">
+        {availableChannels.map(channel => (
+          <button
+            key={channel}
+            className={`channel-pill ${selectedChannel === channel ? 'selected' : ''} ${unreadChannels.has(channel) ? 'unread' : ''}`}
+            onClick={() => handleChannelSelect(channel)}
+          >
+            {channel}
+          </button>
+        ))}
+      </div>
+
+      {/* Messages Section */}
       <div className="chat-messages">
-        {messages.length === 0 ? (
-          <div className="chat-empty">No messages yet. Start the conversation!</div>
+        {filteredMessages.length === 0 ? (
+          <div className="chat-empty">
+            {selectedChannel === 'ALL'
+              ? 'No messages yet. Start the conversation!'
+              : `No messages with ${selectedChannel} yet.`
+            }
+          </div>
         ) : (
-          messages.map((msg, index) => (
+          filteredMessages.map((msg, index) => (
             <div key={msg.id || index} className="chat-message">
               <div className="chat-message-header">
                 <span className="chat-sender">{msg.sender_name}</span>
@@ -106,11 +196,18 @@ function ChatPanel({ sandboxId, socket, characterName, role }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Form */}
       <form className="chat-input-form" onSubmit={handleSendMessage}>
         <input
           type="text"
           className="chat-input"
-          placeholder={characterName ? "Type a message..." : "Set your name first..."}
+          placeholder={
+            !characterName
+              ? "Set your name first..."
+              : selectedChannel === 'ALL'
+                ? "Message to all..."
+                : `Message to ${selectedChannel}...`
+          }
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           disabled={!characterName}

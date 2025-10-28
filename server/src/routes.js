@@ -250,7 +250,18 @@ module.exports = function(io) {
   // GET /api/sandbox/:id/messages - Get chat messages
   router.get('/sandbox/:id/messages', (req, res) => {
     try {
-      const messages = db.getMessages.all(req.params.id);
+      const sandboxId = req.params.id;
+      const playerName = req.query.for_player;
+
+      // If for_player query param is provided, filter messages for that player
+      let messages;
+      if (playerName) {
+        messages = db.getMessagesForPlayer.all(sandboxId, playerName, playerName);
+      } else {
+        // Return all messages (for backward compatibility)
+        messages = db.getMessages.all(sandboxId);
+      }
+
       res.json(messages);
     } catch (error) {
       console.error('Error getting messages:', error);
@@ -262,26 +273,30 @@ module.exports = function(io) {
   router.post('/sandbox/:id/message', (req, res) => {
     try {
       const sandboxId = req.params.id;
-      const { sender_name, sender_role, message } = req.body;
-      
+      const { sender_name, sender_role, message, recipient_name } = req.body;
+
       if (!sender_name || !sender_role || !message) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
-      
-      const result = db.createMessage.run(sandboxId, sender_name, sender_role, message);
-      
+
+      // recipient_name is optional - null means message to ALL
+      const recipientName = recipient_name || null;
+
+      const result = db.createMessage.run(sandboxId, sender_name, sender_role, message, recipientName);
+
       const messageData = {
         id: result.lastInsertRowid,
         sandbox_id: sandboxId,
         sender_name,
         sender_role,
         message,
+        recipient_name: recipientName,
         created_at: new Date().toISOString()
       };
-      
+
       // Emit socket event to notify all clients
       io.to(sandboxId).emit('chat-message', messageData);
-      
+
       res.json(messageData);
     } catch (error) {
       console.error('Error creating message:', error);
