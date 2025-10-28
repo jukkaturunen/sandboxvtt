@@ -71,6 +71,34 @@ function initializeDatabase() {
     }
   }
 
+  // Add dice roll columns to existing tables (migration)
+  try {
+    db.exec(`ALTER TABLE chat_messages ADD COLUMN is_dice_roll INTEGER DEFAULT 0`);
+    console.log('Added is_dice_roll column to chat_messages table');
+  } catch (error) {
+    if (!error.message.includes('duplicate column name')) {
+      console.error('Migration error:', error.message);
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE chat_messages ADD COLUMN dice_command TEXT`);
+    console.log('Added dice_command column to chat_messages table');
+  } catch (error) {
+    if (!error.message.includes('duplicate column name')) {
+      console.error('Migration error:', error.message);
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE chat_messages ADD COLUMN dice_results TEXT`);
+    console.log('Added dice_results column to chat_messages table');
+  } catch (error) {
+    if (!error.message.includes('duplicate column name')) {
+      console.error('Migration error:', error.message);
+    }
+  }
+
   console.log('Database initialized successfully');
 }
 
@@ -105,8 +133,8 @@ const deleteToken = db.prepare('DELETE FROM tokens WHERE id = ?');
 
 // Chat operations
 const createMessage = db.prepare(`
-  INSERT INTO chat_messages (sandbox_id, sender_name, sender_role, message, recipient_name)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT INTO chat_messages (sandbox_id, sender_name, sender_role, message, recipient_name, is_dice_roll, dice_command, dice_results)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `);
 const getMessages = db.prepare('SELECT * FROM chat_messages WHERE sandbox_id = ? ORDER BY created_at ASC');
 const getMessagesForPlayer = db.prepare(`

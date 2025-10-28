@@ -6,6 +6,7 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
   const [newMessage, setNewMessage] = useState('');
   const [selectedChannel, setSelectedChannel] = useState('ALL');
   const [unreadChannels, setUnreadChannels] = useState(new Set());
+  const [errorNotification, setErrorNotification] = useState(null);
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
 
@@ -113,6 +114,12 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
     }
   }, [isActiveTab, characterName]);
 
+  // Show error notification
+  const showErrorNotification = (message) => {
+    setErrorNotification(message);
+    setTimeout(() => setErrorNotification(null), 3000);
+  };
+
   // Handle channel selection
   const handleChannelSelect = (channel) => {
     setSelectedChannel(channel);
@@ -148,9 +155,17 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
 
       if (response.ok) {
         setNewMessage('');
+      } else {
+        // Handle error response (e.g., invalid dice roll)
+        const errorData = await response.json();
+        const errorMessage = errorData.error || 'Failed to send message';
+
+        // Show error notification to user
+        showErrorNotification(errorMessage);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
+      showErrorNotification('Failed to send message. Please check your connection.');
     }
   };
 
@@ -212,7 +227,7 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
           </div>
         ) : (
           filteredMessages.map((msg, index) => (
-            <div key={msg.id || index} className="chat-message">
+            <div key={msg.id || index} className={`chat-message ${msg.is_dice_roll ? 'dice-roll' : ''}`}>
               <div className="chat-message-header">
                 <span className="chat-sender">{msg.sender_name}</span>
                 <span className="chat-timestamp">{formatTimestamp(msg.created_at)}</span>
@@ -223,6 +238,13 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Error Notification */}
+      {errorNotification && (
+        <div className="chat-error-notification">
+          {errorNotification}
+        </div>
+      )}
 
       {/* Input Form */}
       <form className="chat-input-form" onSubmit={handleSendMessage}>

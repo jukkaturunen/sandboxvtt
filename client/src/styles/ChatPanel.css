@@ -152,6 +152,43 @@
   white-space: pre-wrap;
 }
 
+/* Dice Roll Messages */
+.chat-message.dice-roll {
+  background-color: #2c3142;
+  border-left: 3px solid #f39c12;
+}
+
+.chat-message.dice-roll .chat-message-text {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: pre-line;
+}
+
+/* Error Notification */
+.chat-error-notification {
+  background: #e74c3c;
+  color: #ffffff;
+  padding: 10px 12px;
+  margin: 0 12px 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+  animation: slideInError 0.3s ease-out;
+}
+
+@keyframes slideInError {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Input Form */
 .chat-input-form {
   display: flex;

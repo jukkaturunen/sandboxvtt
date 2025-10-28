@@ -389,6 +389,86 @@ Phase 7-11 will be implemented next.
 
 ### Recent Updates (2025-10-28)
 
+#### Dice Rolling System - COMPLETED ✅
+
+**Chat-Based Dice Rolling** - Roll dice using `/r` command notation with full TTRPG support
+
+##### Dice Rolling Features
+- [x] `/r` command notation for rolling dice in chat
+- [x] Support for all standard RPG dice: d4, d6, d8, d10, d12, d20, d100
+- [x] Multiple dice rolling (e.g., `/r 3d8`)
+- [x] Modifier support: addition and subtraction (e.g., `/r 2d10 + 2`, `/r 1d20 - 4`)
+- [x] Drop highest/lowest modifiers (e.g., `/r 2d20 dh`, `/r 4d6 dl`)
+- [x] Flexible syntax: modifiers can appear in any order
+- [x] Command display in output (shows original command at top)
+
+##### Backend Implementation
+- [x] Created `diceRoller.js` utility module with complete dice logic
+- [x] Regex-based command parser supporting flexible syntax
+- [x] Random dice simulation with proper range (1 to N)
+- [x] Drop logic: `dh` drops highest value, `dl` drops lowest value
+- [x] Database schema: added `is_dice_roll`, `dice_command`, `dice_results` columns
+- [x] Updated message endpoint to detect and process `/r` commands
+- [x] Error validation: invalid syntax returns error to sender only (not broadcast)
+
+##### Output Formatting
+- [x] Command shown on first line (e.g., `/r 2d20 + 3 dh`)
+- [x] Individual rolls displayed with `+` separators
+- [x] Dropped dice shown in brackets `[15]`
+- [x] Modifiers shown in parentheses `(+ 3)`
+- [x] Sum calculated correctly (excludes dropped dice, includes modifier)
+
+##### Frontend Rendering
+- [x] Special styling for dice roll messages
+- [x] Darker background (#2c3142) with orange left border (#f39c12)
+- [x] Monospace font for roll output (Courier New)
+- [x] Pre-line formatting preserves command/roll/sum structure
+- [x] Dice rolls integrate seamlessly with chat channels (ALL and private)
+
+##### Validation & Error Handling
+- [x] Dice count validation (1-100)
+- [x] Dice type validation (only d4, d6, d8, d10, d12, d20, d100)
+- [x] Drop modifier requires 2+ dice
+- [x] Clear error messages for invalid syntax
+- [x] Contextual error notifications (red toast above input box)
+- [x] Non-blocking error display with smooth slide-in animation
+- [x] Auto-dismiss after 3 seconds
+- [x] Errors sent only to sender (not broadcast to all players)
+
+**Examples of Working Commands:**
+- `/r 1d6` → Simple single die roll
+- `/r 3d8` → Multiple dice
+- `/r 2d10 + 2` → Roll with modifier
+- `/r 1d20 - 4` → Roll with subtraction
+- `/r 1d12` → Greataxe damage (d12 support)
+- `/r 2d20 dh` → Drop highest (advantage)
+- `/r 4d6 dl` → Drop lowest (classic D&D ability scores)
+- `/r 2d20 - 2 dh` → Combined modifiers
+
+**Result**: Full-featured dice rolling system ready for tabletop gaming sessions!
+
+---
+
+#### Chat UX Improvements - COMPLETED ✅
+
+##### Auto-Focus Behavior
+- [x] Message input auto-focuses when chat tab is selected
+- [x] Message input auto-focuses when user clicks channel pill
+- [x] Improves typing flow - no need to click input field
+
+##### Panel Collapse Fix
+- [x] Fixed panel forcing open when collapsed and message arrives
+- [x] Added `isPanelCollapsed` prop to ChatPanel
+- [x] Disabled `scrollIntoView` when panel is collapsed
+- [x] Prevents browser from forcing panel visibility
+
+##### UI Refinements
+- [x] Send button hidden for desktop (still functional via Enter key)
+- [x] Button remains in DOM for future mobile support
+- [x] CSS `display: none` for easy toggle later
+
+---
+
 #### Phase 11: Chat Channels & Private Messaging - COMPLETED ✅
 
 **Channel-Based Chat System** - All-to-all broadcasting + private 1-on-1 messaging

@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 const db = require('./database');
+const { processDiceRoll } = require('./diceRoller');
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
@@ -282,15 +283,57 @@ module.exports = function(io) {
       // recipient_name is optional - null means message to ALL
       const recipientName = recipient_name || null;
 
-      const result = db.createMessage.run(sandboxId, sender_name, sender_role, message, recipientName);
+      // Check if this is a dice roll command
+      let isDiceRoll = 0;
+      let diceCommand = null;
+      let diceResults = null;
+      let finalMessage = message;
+
+      if (message.trim().startsWith('/r ')) {
+        const rollCommand = message.trim().substring(3).trim();
+        const rollResult = processDiceRoll(rollCommand);
+
+        if (!rollResult.isValid) {
+          // Return error only to sender (don't broadcast)
+          return res.status(400).json({ error: rollResult.error });
+        }
+
+        // Dice roll successful
+        isDiceRoll = 1;
+        diceCommand = rollResult.command;
+        diceResults = JSON.stringify({
+          count: rollResult.count,
+          sides: rollResult.sides,
+          rolls: rollResult.rolls,
+          droppedIndex: rollResult.droppedIndex,
+          modifier: rollResult.modifier,
+          dropModifier: rollResult.dropModifier,
+          sum: rollResult.sum
+        });
+        finalMessage = rollResult.formattedOutput;
+      }
+
+      const result = db.createMessage.run(
+        sandboxId,
+        sender_name,
+        sender_role,
+        finalMessage,
+        recipientName,
+        isDiceRoll,
+        diceCommand,
+        diceResults
+      );
 
       const messageData = {
         id: result.lastInsertRowid,
         sandbox_id: sandboxId,
         sender_name,
         sender_role,
-        message,
+        message: finalMessage,
         recipient_name: recipientName,
+        is_dice_roll: isDiceRoll,
+        dice_command: diceCommand,
+        dice_results: diceResults,
         created_at: new Date().toISOString()
       };
 
