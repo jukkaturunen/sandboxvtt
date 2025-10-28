@@ -130,11 +130,34 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
   const copyLink = (linkType) => {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/sandbox/${sandboxId}?role=${linkType}`;
-    navigator.clipboard.writeText(link).then(() => {
-      showNotification(`${linkType === 'gm' ? 'GM' : 'Player'} link copied to clipboard!`);
-    }).catch(() => {
-      showNotification('Failed to copy link');
-    });
+
+    // Try modern clipboard API first (requires HTTPS)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(() => {
+        showNotification(`${linkType === 'gm' ? 'GM' : 'Player'} link copied to clipboard!`);
+      }).catch(() => {
+        showNotification('Failed to copy link');
+      });
+    } else {
+      // Fallback for HTTP contexts (non-secure)
+      const textArea = document.createElement('textarea');
+      textArea.value = link;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand('copy');
+        showNotification(`${linkType === 'gm' ? 'GM' : 'Player'} link copied to clipboard!`);
+      } catch (err) {
+        showNotification('Failed to copy link. Please copy manually: ' + link);
+      }
+
+      document.body.removeChild(textArea);
+    }
   };
 
   return (
