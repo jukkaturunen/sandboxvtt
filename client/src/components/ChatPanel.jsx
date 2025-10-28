@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import '../styles/ChatPanel.css';
 
-function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTab, onUnreadChange }) {
+function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTab, onUnreadChange, isPanelCollapsed }) {
   const [allMessages, setAllMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedChannel, setSelectedChannel] = useState('ALL');
@@ -98,9 +98,12 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
   }, [allMessages, selectedChannel, characterName]);
 
   // Auto-scroll to bottom when filtered messages change
+  // Only scroll if panel is not collapsed to prevent browser from forcing panel open
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [filteredMessages]);
+    if (!isPanelCollapsed) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [filteredMessages, isPanelCollapsed]);
 
   // Handle channel selection
   const handleChannelSelect = (channel) => {

@@ -141,6 +141,7 @@ function SandboxPage() {
             characterName={characterName}
             role={role}
             onCreateToken={(token) => setPendingToken(token)}
+            isPanelCollapsed={rightPanelCollapsed}
           />
         </div>
       </div>

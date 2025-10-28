@@ -19,13 +19,14 @@
 | Phase 8: Right Panel Tabbed UI | ✅ Complete | 100% | Tokens, Chat, Players tabs |
 | Phase 9: Player Tracking | ✅ Complete | 100% | Real-time player list |
 | Phase 10: Polish & Error Handling | ✅ Complete | 100% | All improvements done |
-| Phase 11: Testing & Deployment | ⏳ Not Started | 0% | - |
+| Phase 11: Chat Channels & Private Messaging | ✅ Complete | 100% | All-to-all + 1-on-1 messaging |
+| Phase 12: Testing & Deployment | ⏳ Not Started | 0% | - |
 
-**Overall Completion**: 10/11 phases (100%)
+**Overall Completion**: 11/12 phases (92%)
 
 ---
 
-## Current Phase: Phase 11 - Testing & Deployment
+## Current Phase: Phase 12 - Testing & Deployment
 
 ### Previous Phase (Phase 10) - COMPLETED ✅
 
@@ -387,6 +388,73 @@
 Phase 7-11 will be implemented next.
 
 ### Recent Updates (2025-10-28)
+
+#### Phase 11: Chat Channels & Private Messaging - COMPLETED ✅
+
+**Channel-Based Chat System** - All-to-all broadcasting + private 1-on-1 messaging
+
+##### 11.1 Database Schema Updates
+- [x] Added `recipient_name` column to `chat_messages` table (nullable)
+- [x] NULL recipient = message to ALL (broadcast)
+- [x] Specific recipient = private 1-on-1 message
+- [x] Database migration handling for existing installations
+
+##### 11.2 Backend API Enhancements
+- [x] Updated `POST /api/sandbox/:id/message` to accept optional `recipient_name`
+- [x] Updated `GET /api/sandbox/:id/messages` with `?for_player=<name>` query filter
+- [x] Added `getMessagesForPlayer` prepared statement for efficient filtering
+- [x] Messages filtered server-side: shows ALL messages + private messages to/from player
+- [x] Socket.io `chat-message` event includes `recipient_name` for client filtering
+
+##### 11.3 Channel Pills UI
+- [x] Horizontal scrollable channel selector above chat messages
+- [x] Compact design: 11px font, 4px/10px padding, 4px gaps
+- [x] "ALL" channel always first and selected by default
+- [x] Dynamic player channels (one pill per connected player)
+- [x] Selected channel: turquoise background (#4ecdc4)
+- [x] Unread channel indicator: pulsating orange background animation
+- [x] Hidden scrollbar for clean appearance
+
+##### 11.4 Message Filtering & Routing
+- [x] Client-side message filtering based on selected channel
+- [x] ALL channel: shows only messages where `recipient_name === null`
+- [x] Player channel: shows messages between current user and selected player
+- [x] Outgoing messages include correct `recipient_name` based on selected channel
+- [x] Smart channel detection using `getMessageChannel()` function
+
+##### 11.5 Unread Notification System
+- [x] **Tab-level indicator**: Orange dot on "Chat" tab when tab is inactive and new messages arrive
+- [x] **Channel-level indicator**: Orange pulsating background on channel pills for unread messages
+- [x] Indicators clear automatically when user views the channel/tab
+- [x] Works even when right panel is collapsed (components stay mounted)
+- [x] Fixed rendering approach: all tabs always mounted but hidden with CSS
+
+##### 11.6 Component Architecture Improvements
+- [x] RightPanel now always renders all tabs (not conditional mounting)
+- [x] Active/hidden states controlled via CSS classes
+- [x] ChatPanel stays mounted and listening to Socket.io events even when hidden
+- [x] Proper prop passing: `isActiveTab` and `onUnreadChange` callbacks
+- [x] Players list shared from RightPanel to ChatPanel
+- [x] Efficient React hooks: `useCallback` for memoization
+
+##### 11.7 Visual Design
+- [x] Channel pills match dark theme (#2c3e50 background)
+- [x] Small 6px orange dot on tab button with pulse animation
+- [x] Smooth transitions and animations throughout
+- [x] Compact spacing to minimize vertical space usage
+- [x] Clean, minimal design consistent with existing UI
+
+##### 11.8 Testing & Edge Cases
+- [x] Messages correctly filtered for each player
+- [x] Private messages hidden from other players
+- [x] Indicators work when chat tab is inactive
+- [x] Indicators work when right panel is collapsed
+- [x] Channel pills update dynamically as players join/leave
+- [x] No performance issues with real-time updates
+
+**Result**: Fully functional channel-based chat system with private messaging, ready for production. Future-proof architecture prepared for dice roll integration.
+
+---
 
 #### Production Deployment & Bug Fixes
 - [x] **Deployment Infrastructure**

@@ -4,7 +4,7 @@ import ChatPanel from './ChatPanel';
 import PlayersPanel from './PlayersPanel';
 import '../styles/RightPanel.css';
 
-function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
+function RightPanel({ sandboxId, socket, characterName, role, onCreateToken, isPanelCollapsed }) {
   const [activeTab, setActiveTab] = useState('tokens');
   const [players, setPlayers] = useState([]);
   const [chatHasUnread, setChatHasUnread] = useState(false);
@@ -71,6 +71,7 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken }) {
             players={players}
             isActiveTab={activeTab === 'chat'}
             onUnreadChange={setChatHasUnread}
+            isPanelCollapsed={isPanelCollapsed}
           />
         </div>
 
