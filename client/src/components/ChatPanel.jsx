@@ -7,6 +7,7 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
   const [selectedChannel, setSelectedChannel] = useState('ALL');
   const [unreadChannels, setUnreadChannels] = useState(new Set());
   const messagesEndRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   // Load existing messages from database (filtered for current player)
   useEffect(() => {
@@ -105,6 +106,13 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
     }
   }, [filteredMessages, isPanelCollapsed]);
 
+  // Auto-focus message input when chat tab becomes active
+  useEffect(() => {
+    if (isActiveTab && characterName) {
+      messageInputRef.current?.focus();
+    }
+  }, [isActiveTab, characterName]);
+
   // Handle channel selection
   const handleChannelSelect = (channel) => {
     setSelectedChannel(channel);
@@ -114,6 +122,8 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
       newSet.delete(channel);
       return newSet;
     });
+    // Focus the message input after channel selection
+    messageInputRef.current?.focus();
   };
 
   // Handle sending message
@@ -217,6 +227,7 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
       {/* Input Form */}
       <form className="chat-input-form" onSubmit={handleSendMessage}>
         <input
+          ref={messageInputRef}
           type="text"
           className="chat-input"
           placeholder={
