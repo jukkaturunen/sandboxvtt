@@ -102,12 +102,15 @@ function SandboxPage() {
 
             <div className="header-spacer"></div>
 
-            {/* Right collapse arrow */}
-            <button
-              className={`collapse-arrow right ${rightPanelCollapsed ? 'collapsed' : ''}`}
-              onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-              title={rightPanelCollapsed ? "Show Right Panel" : "Hide Right Panel"}
-            />
+            {/* Header Container - Right side controls */}
+            <div className={`header-container ${rightPanelCollapsed ? 'collapsed' : ''}`}>
+              {/* Right collapse arrow */}
+              <button
+                className="collapse-arrow right"
+                onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+                title={rightPanelCollapsed ? "Show Right Panel" : "Hide Right Panel"}
+              />
+            </div>
           </div>
           <div className="canvas-container">
             <ImageCanvas

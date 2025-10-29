@@ -68,10 +68,10 @@
 .canvas-header {
   background: #1a252f;
   color: white;
-  padding: 0.75rem 0.1rem;
+  padding: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   border-bottom: 2px solid #34495e;
   flex-shrink: 0;
   height: 43px;
@@ -87,7 +87,23 @@
   flex: 1;
 }
 
-/* Collapse Arrows - positioned absolutely to slide with panels */
+/* Header Container - Right side controls */
+.header-container {
+  position: absolute;
+  right: 300px;
+  top: 0;
+  height: 43px;
+  display: flex;
+  align-items: center;
+  transition: right 0.3s ease;
+  z-index: 20;
+}
+
+.header-container.collapsed {
+  right: 10px;
+}
+
+/* Collapse Arrows - positioned within header container or absolutely for left */
 .collapse-arrow {
   background: none;
   border: none;
@@ -100,10 +116,8 @@
   width: 0;
   height: 0;
   border-style: solid;
-  transition: opacity 0.2s, left 0.3s ease, right 0.3s ease;
+  transition: opacity 0.2s;
   opacity: 0.7;
-  position: absolute;
-  top: calc(21.5px - 8px);
   z-index: 25;
 }
 
@@ -115,22 +129,21 @@
   opacity: 0.5;
 }
 
-/* Left arrow positioning - slides with left panel */
+/* Left arrow positioning - slides with left panel (absolute positioning) */
 .collapse-arrow.left {
+  position: absolute;
   left: 250px;
+  top: calc(21.5px - 8px);
+  transition: left 0.3s ease, opacity 0.2s;
 }
 
 .collapse-arrow.left.collapsed {
   left: 10px;
 }
 
-/* Right arrow positioning - slides with right panel */
+/* Right arrow - positioned within header-container (relative positioning) */
 .collapse-arrow.right {
-  right: 300px;
-}
-
-.collapse-arrow.right.collapsed {
-  right: 10px;
+  position: relative;
 }
 
 /* Triangle pointing left (hide left panel) */
@@ -146,13 +159,13 @@
 }
 
 /* Triangle pointing right (hide right panel) */
-.collapse-arrow.right:not(.collapsed) {
+.header-container:not(.collapsed) .collapse-arrow.right {
   border-width: 8px 0 8px 12px;
   border-color: transparent transparent transparent white;
 }
 
 /* Triangle pointing left (show right panel) */
-.collapse-arrow.right.collapsed {
+.header-container.collapsed .collapse-arrow.right {
   border-width: 8px 12px 8px 0;
   border-color: transparent white transparent transparent;
 }

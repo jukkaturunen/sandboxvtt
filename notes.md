@@ -1,2 +1,0 @@
-Change the gm panel so that we can add tabs to it, just like there is on the right side panel. Remove the gm controls text from gm panel header, we don't need that. Make the first tab from the current upload image and image list content, and make the tab name "images". Then add another tab with tab name "Conf", we'll put configuration options there, but for now leave it empty.
-I want to keep the share links at the bottom of panel, they are not part of any tab. When share link section is closed, make it smaller, it should take vertically pretty thin slice. 
