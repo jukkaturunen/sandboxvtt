@@ -117,6 +117,12 @@ function SandboxPage() {
 
             {/* Header Container - Right side controls */}
             <div className={`header-container ${rightPanelCollapsed ? 'collapsed' : ''}`}>
+              {/* Current user name */}
+              {currentUser && (
+                <span className="current-user-name">
+                  {currentUser.name}
+                </span>
+              )}
               {/* Logout button */}
               {currentUser && (
                 <button
