@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import UserAuthModal from '../components/UserAuthModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
@@ -10,8 +10,6 @@ import '../styles/SandboxPage.css';
 
 function SandboxPage() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const role = searchParams.get('role') || 'player';
 
   const [sandboxData, setSandboxData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +28,8 @@ function SandboxPage() {
     const savedUser = getUserForSandbox(id);
 
     if (savedUser) {
-      // Attempt to authenticate saved user
-      if (savedUser.hasPassword) {
-        // User has password, show modal for auth
-        setShowAuthModal(true);
-      } else {
-        // No password, auto-login
-        setCurrentUser(savedUser);
-      }
+      // Auto-login with saved user (no password prompt on reload)
+      setCurrentUser(savedUser);
     } else {
       // No saved user, show auth modal
       setShowAuthModal(true);
@@ -105,7 +97,7 @@ function SandboxPage() {
         <div className="canvas-area">
           <div className="canvas-header">
             {/* Left collapse arrow - only show for GM */}
-            {role === 'gm' && (
+            {currentUser?.role === 'gm' && (
               <button
                 className={`collapse-arrow left ${leftPanelCollapsed ? 'collapsed' : ''}`}
                 onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
@@ -131,14 +123,14 @@ function SandboxPage() {
               socket={socket}
               pendingToken={pendingToken}
               onTokenPlaced={() => setPendingToken(null)}
-              gmPreviewImage={role === 'gm' ? previewImage : null}
+              gmPreviewImage={currentUser?.role === 'gm' ? previewImage : null}
               rightPanelCollapsed={rightPanelCollapsed}
             />
           </div>
         </div>
 
         {/* GM Panel - Floating on left (only for GM) */}
-        {role === 'gm' && (
+        {currentUser?.role === 'gm' && (
           <div className={`gm-panel-container ${leftPanelCollapsed ? 'collapsed' : ''}`}>
             <GMPanel
               sandboxId={id}

@@ -53,8 +53,8 @@ function FrontPage() {
       // Save GM user to localStorage
       saveUserForSandbox(data.id, data.gmUser);
 
-      // Redirect to sandbox page with GM role
-      navigate(`/sandbox/${data.id}?role=gm`);
+      // Redirect to sandbox page
+      navigate(`/sandbox/${data.id}`);
     } catch (error) {
       console.error('Error creating sandbox:', error);
       setError(error.message);

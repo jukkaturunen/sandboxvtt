@@ -82,8 +82,6 @@ module.exports = function(io) {
       // Return sandbox and GM user data
       res.json({
         id: sandboxId,
-        gmUrl: `/sandbox/${sandboxId}?role=gm`,
-        playerUrl: `/sandbox/${sandboxId}?role=player`,
         gmUser: {
           id: gmUserId,
           name: gm_name,

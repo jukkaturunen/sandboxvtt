@@ -130,7 +130,7 @@ function GMPanel({ sandboxId, socket, onPreviewImage, previewImage }) {
 
   const copyLink = (linkType) => {
     const baseUrl = window.location.origin;
-    const link = `${baseUrl}/sandbox/${sandboxId}?role=${linkType}`;
+    const link = `${baseUrl}/sandbox/${sandboxId}`;
 
     // Try modern clipboard API first (requires HTTPS)
     if (navigator.clipboard && navigator.clipboard.writeText) {

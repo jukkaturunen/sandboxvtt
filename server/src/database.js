@@ -170,7 +170,7 @@ const createUser = db.prepare(`
   VALUES (?, ?, ?, ?, ?)
 `);
 const getUserById = db.prepare('SELECT * FROM users WHERE id = ? AND sandbox_id = ?');
-const getUsersBySandbox = db.prepare('SELECT id, name, role, created_at FROM users WHERE sandbox_id = ? ORDER BY created_at ASC');
+const getUsersBySandbox = db.prepare('SELECT id, name, role, created_at, password_hash FROM users WHERE sandbox_id = ? ORDER BY created_at ASC');
 const updateUserName = db.prepare('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
 const updateUserPassword = db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
 
