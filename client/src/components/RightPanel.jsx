@@ -4,7 +4,7 @@ import ChatPanel from './ChatPanel';
 import PlayersPanel from './PlayersPanel';
 import '../styles/RightPanel.css';
 
-function RightPanel({ sandboxId, socket, characterName, role, onCreateToken, isPanelCollapsed }) {
+function RightPanel({ sandboxId, socket, currentUser, onCreateToken, isPanelCollapsed }) {
   const [activeTab, setActiveTab] = useState('tokens');
   const [players, setPlayers] = useState([]);
   const [chatHasUnread, setChatHasUnread] = useState(false);
@@ -59,15 +59,17 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken, isP
       {/* Tab Content */}
       <div className="tab-content">
         <div className={`tab-pane ${activeTab === 'tokens' ? 'active' : 'hidden'}`}>
-          <TokenPanel onCreateToken={onCreateToken} />
+          <TokenPanel
+            currentUser={currentUser}
+            onCreateToken={onCreateToken}
+          />
         </div>
 
         <div className={`tab-pane ${activeTab === 'chat' ? 'active' : 'hidden'}`}>
           <ChatPanel
             sandboxId={sandboxId}
             socket={socket}
-            characterName={characterName}
-            role={role}
+            currentUser={currentUser}
             players={players}
             isActiveTab={activeTab === 'chat'}
             onUnreadChange={setChatHasUnread}
@@ -76,7 +78,11 @@ function RightPanel({ sandboxId, socket, characterName, role, onCreateToken, isP
         </div>
 
         <div className={`tab-pane ${activeTab === 'players' ? 'active' : 'hidden'}`}>
-          <PlayersPanel socket={socket} />
+          <PlayersPanel
+            sandboxId={sandboxId}
+            socket={socket}
+            currentUser={currentUser}
+          />
         </div>
       </div>
     </div>

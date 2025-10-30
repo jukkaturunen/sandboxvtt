@@ -1,0 +1,1 @@
+I want to add a link in the header container, it should go left to the collapse arrow and read "SHEET". When clicked it should toggle (open/close) a modal with an editable textarea in it. User should be able to write text in there an save it.

@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-function useSocket(sandboxId, playerName = null, role = 'player') {
+function useSocket(sandboxId, userId = null, userName = null, userRole = 'player') {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
 
   useEffect(() => {
+    // Don't connect if userId is not available
+    if (!userId) {
+      return;
+    }
+
     // Connect to Socket.io server
     // In development: Use Vite proxy (relative path)
     // In production: Use environment variable or window.location.origin
@@ -22,13 +28,15 @@ function useSocket(sandboxId, playerName = null, role = 'player') {
     const handleConnect = () => {
       console.log('Socket connected:', socket.id);
       setIsConnected(true);
+      setConnectionError(null);
 
-      // Join the sandbox room with player info
-      if (sandboxId && playerName) {
+      // Join the sandbox room with user info
+      if (sandboxId && userId && userName) {
         socket.emit('join-sandbox', {
           sandboxId,
-          playerName: playerName || 'Anonymous',
-          role: role || 'player'
+          userId,
+          userName,
+          role: userRole || 'player'
         });
       }
     };
@@ -41,20 +49,29 @@ function useSocket(sandboxId, playerName = null, role = 'player') {
     const handleReconnect = () => {
       console.log('Socket reconnected');
       setIsConnected(true);
+      setConnectionError(null);
 
       // Rejoin the sandbox room after reconnection
-      if (sandboxId && playerName) {
+      if (sandboxId && userId && userName) {
         socket.emit('join-sandbox', {
           sandboxId,
-          playerName: playerName || 'Anonymous',
-          role: role || 'player'
+          userId,
+          userName,
+          role: userRole || 'player'
         });
       }
+    };
+
+    const handleUserAlreadyConnected = (data) => {
+      console.error('User already connected:', data);
+      setConnectionError(data.error);
+      setIsConnected(false);
     };
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('reconnect', handleReconnect);
+    socket.on('user-already-connected', handleUserAlreadyConnected);
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
@@ -70,15 +87,16 @@ function useSocket(sandboxId, playerName = null, role = 'player') {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('reconnect', handleReconnect);
+      socket.off('user-already-connected', handleUserAlreadyConnected);
 
       if (sandboxId) {
         socket.emit('leave-sandbox', sandboxId);
       }
       socket.disconnect();
     };
-  }, [sandboxId, playerName, role]);
+  }, [sandboxId, userId, userName, userRole]);
 
-  return { socket: socketRef.current, isConnected };
+  return { socket: socketRef.current, isConnected, connectionError };
 }
 
 export default useSocket;

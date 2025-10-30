@@ -1,34 +1,54 @@
 const db = require('./database');
 
 // Store connected players per sandbox
-const sandboxPlayers = new Map(); // Map<sandboxId, Map<socketId, playerInfo>>
+// Map<sandboxId, Map<userId, playerInfo>>
+const sandboxPlayers = new Map();
+
+// Map socket IDs to user IDs for cleanup
+// Map<socketId, { sandboxId, userId }>
+const socketToUser = new Map();
 
 // Initialize socket event handlers
 function initializeSocketEvents(io) {
   io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
-    // Join a sandbox room with player info
-    socket.on('join-sandbox', ({ sandboxId, playerName, role }) => {
-      socket.join(sandboxId);
-      console.log(`Socket ${socket.id} joined sandbox ${sandboxId} as ${playerName} (${role})`);
-
+    // Join a sandbox room with user info
+    socket.on('join-sandbox', ({ sandboxId, userId, userName, role }) => {
       // Initialize sandbox player map if needed
       if (!sandboxPlayers.has(sandboxId)) {
         sandboxPlayers.set(sandboxId, new Map());
       }
 
-      // Store player info
+      const sandboxUsers = sandboxPlayers.get(sandboxId);
+
+      // Check if user is already connected
+      if (sandboxUsers.has(userId)) {
+        console.log(`User ${userId} already connected to sandbox ${sandboxId}`);
+        socket.emit('user-already-connected', {
+          error: 'This user is already connected to the sandbox from another device or tab.'
+        });
+        return;
+      }
+
+      socket.join(sandboxId);
+      console.log(`Socket ${socket.id} joined sandbox ${sandboxId} as ${userName} (${role})`);
+
+      // Store player info keyed by userId
       const playerInfo = {
+        userId: userId,
         socketId: socket.id,
-        name: playerName || 'Anonymous',
+        name: userName || 'Anonymous',
         role: role || 'player',
         joinedAt: new Date().toISOString()
       };
-      sandboxPlayers.get(sandboxId).set(socket.id, playerInfo);
+      sandboxUsers.set(userId, playerInfo);
+
+      // Store socket-to-user mapping for cleanup
+      socketToUser.set(socket.id, { sandboxId, userId });
 
       // Broadcast updated player list to all players in the room
-      const players = Array.from(sandboxPlayers.get(sandboxId).values());
+      const players = Array.from(sandboxUsers.values());
       io.to(sandboxId).emit('players-list', players);
 
       // Also notify others with player-joined event for optional handling
@@ -37,39 +57,50 @@ function initializeSocketEvents(io) {
 
     // Request current players list
     socket.on('request-players-list', () => {
-      // Find which sandbox this socket is in
-      for (const [sandboxId, players] of sandboxPlayers.entries()) {
-        if (players.has(socket.id)) {
+      // Find which sandbox this socket is in using socket-to-user mapping
+      const mapping = socketToUser.get(socket.id);
+      if (mapping) {
+        const { sandboxId } = mapping;
+        const players = sandboxPlayers.get(sandboxId);
+        if (players) {
           const playersList = Array.from(players.values());
           console.log(`Sending player list to ${socket.id}:`, playersList);
           socket.emit('players-list', playersList);
-          break;
         }
       }
     });
 
     // Leave a sandbox room
     socket.on('leave-sandbox', (sandboxId) => {
+      const mapping = socketToUser.get(socket.id);
+      if (!mapping) return;
+
+      const { userId } = mapping;
+
       socket.leave(sandboxId);
-      console.log(`Socket ${socket.id} left sandbox ${sandboxId}`);
+      console.log(`Socket ${socket.id} (user ${userId}) left sandbox ${sandboxId}`);
 
       // Remove player from tracking
       if (sandboxPlayers.has(sandboxId)) {
-        const playerInfo = sandboxPlayers.get(sandboxId).get(socket.id);
-        sandboxPlayers.get(sandboxId).delete(socket.id);
+        const sandboxUsers = sandboxPlayers.get(sandboxId);
+        const playerInfo = sandboxUsers.get(userId);
+        sandboxUsers.delete(userId);
+
+        // Remove socket-to-user mapping
+        socketToUser.delete(socket.id);
 
         // Send updated player list to remaining players
-        const remainingPlayers = Array.from(sandboxPlayers.get(sandboxId).values());
+        const remainingPlayers = Array.from(sandboxUsers.values());
         io.to(sandboxId).emit('players-list', remainingPlayers);
 
         // Clean up empty sandbox maps
-        if (sandboxPlayers.get(sandboxId).size === 0) {
+        if (sandboxUsers.size === 0) {
           sandboxPlayers.delete(sandboxId);
         }
 
         // Also notify with player-left event
         socket.to(sandboxId).emit('player-left', {
-          socketId: socket.id,
+          userId,
           name: playerInfo?.name || 'Unknown',
           timestamp: new Date().toISOString()
         });
@@ -135,25 +166,33 @@ function initializeSocketEvents(io) {
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
 
-      // Remove player from all sandboxes they were in
-      for (const [sandboxId, players] of sandboxPlayers.entries()) {
-        if (players.has(socket.id)) {
-          const playerInfo = players.get(socket.id);
-          players.delete(socket.id);
+      // Get user mapping
+      const mapping = socketToUser.get(socket.id);
+      if (mapping) {
+        const { sandboxId, userId } = mapping;
+
+        // Remove player from sandbox
+        if (sandboxPlayers.has(sandboxId)) {
+          const sandboxUsers = sandboxPlayers.get(sandboxId);
+          const playerInfo = sandboxUsers.get(userId);
+          sandboxUsers.delete(userId);
+
+          // Remove socket-to-user mapping
+          socketToUser.delete(socket.id);
 
           // Send updated player list to remaining players
-          const remainingPlayers = Array.from(players.values());
+          const remainingPlayers = Array.from(sandboxUsers.values());
           io.to(sandboxId).emit('players-list', remainingPlayers);
 
           // Also notify with player-left event
           io.to(sandboxId).emit('player-left', {
-            socketId: socket.id,
+            userId,
             name: playerInfo?.name || 'Unknown',
             timestamp: new Date().toISOString()
           });
 
           // Clean up empty sandbox maps
-          if (players.size === 0) {
+          if (sandboxUsers.size === 0) {
             sandboxPlayers.delete(sandboxId);
           }
         }

@@ -1,6 +1,6 @@
 # SandboxVTT - Implementation Status
 
-**Last Updated**: 2025-10-28
+**Last Updated**: 2025-10-30
 
 ---
 
@@ -20,9 +20,281 @@
 | Phase 9: Player Tracking | ✅ Complete | 100% | Real-time player list |
 | Phase 10: Polish & Error Handling | ✅ Complete | 100% | All improvements done |
 | Phase 11: Chat Channels & Private Messaging | ✅ Complete | 100% | All-to-all + 1-on-1 messaging |
+| Phase 13: User System | ✅ Complete | 100% | UUID-based users with optional passwords |
 | Phase 12: Testing & Deployment | ⏳ Not Started | 0% | - |
 
-**Overall Completion**: 11/12 phases (92%)
+**Overall Completion**: 12/13 phases (92%)
+
+---
+
+## Current Phase: Phase 12 - Testing & Deployment
+
+### Phase 13: Sandbox-Scoped User System - COMPLETED ✅
+
+**Started**: 2025-10-30
+**Completed**: 2025-10-30
+**Goal**: Replace name-based identity with proper user system (UUID-based, password-optional, sandbox-scoped)
+
+#### Architecture Overview
+- **Users scoped to sandboxes**: Each sandbox has its own set of users
+- **UUID-based identity**: Users identified by unique ID, not name
+- **Optional passwords**: Users can set passwords (bcrypt hashed)
+- **LocalStorage persistence**: Auto-rejoin with saved user data
+- **Name changes reflected**: When user changes name, updates everywhere (chat history, players panel)
+
+#### 13.1 Backend Database & Infrastructure - COMPLETED ✅
+
+**Files Modified/Created:**
+- ✅ `server/src/migrations/addUserSystem.js` - Database migration script
+- ✅ `server/src/database.js` - Added user table and prepared statements
+- ✅ `package.json` - Added dependencies: bcrypt, uuid
+
+**Database Changes:**
+- ✅ Created `users` table (id, sandbox_id, name, role, password_hash, timestamps)
+- ✅ Added `sender_id`, `recipient_id` to `chat_messages` table
+- ✅ Added `created_by_user_id` to `tokens` table
+- ✅ Added indexes for performance
+- ✅ Migration script executed successfully
+
+**New Prepared Statements:**
+```javascript
+// User operations
+- createUser(id, sandbox_id, name, role, password_hash)
+- getUserById(id, sandbox_id)
+- getUsersBySandbox(sandbox_id)
+- updateUserName(name, id, sandbox_id)
+- updateUserPassword(password_hash, id, sandbox_id)
+
+// Message operations (updated)
+- getMessagesForUser(sandbox_id, userId, userId) // Filter by userId
+- updateMessageSenderName(name, userId)          // Update denormalized names
+- updateMessageRecipientName(name, userId)
+```
+
+#### 13.2 Backend API Endpoints - COMPLETED ✅
+
+**Files Modified:**
+- ✅ `server/src/routes.js` - Added 4 new user endpoints
+
+**New Endpoints:**
+1. ✅ `POST /api/sandbox/:sandboxId/user` - Create new user
+   - Validates name (2-30 chars), role (gm/player), optional password (min 4 chars)
+   - Generates UUID, hashes password with bcrypt
+   - Returns user data (without password hash)
+
+2. ✅ `GET /api/sandbox/:sandboxId/users` - List all users in sandbox
+   - Returns users without password hashes
+   - Used for "Select Existing Player" dropdown
+
+3. ✅ `POST /api/sandbox/:sandboxId/user/:userId/auth` - Authenticate user
+   - Validates password if user has one
+   - Returns user data on success
+
+4. ✅ `PATCH /api/sandbox/:sandboxId/user/:userId` - Update user name
+   - Requires password if user has one
+   - Updates `users` table
+   - Updates denormalized names in `chat_messages`
+   - Emits `user-name-changed` socket event
+
+#### 13.3 Frontend Utilities - COMPLETED ✅
+
+**Files Created:**
+- ✅ `client/src/utils/userStorage.js` - LocalStorage management
+
+**Functions:**
+```javascript
+- getUserForSandbox(sandboxId)           // Get saved user
+- saveUserForSandbox(sandboxId, userData) // Save user
+- clearUserForSandbox(sandboxId)         // Clear user
+- updateUserNameInStorage(sandboxId, newName) // Update name
+```
+
+#### 13.4 Backend Updates - COMPLETED ✅
+
+**Files Modified:**
+- ✅ `server/src/routes.js` - Updated existing endpoints
+- ✅ `server/src/socketEvents.js` - Complete refactor for userId tracking
+- ✅ `server/src/database.js` - Updated prepared statements
+
+**Endpoint Updates:**
+1. ✅ `POST /api/sandbox` - Creates GM user automatically
+   - Accepts `gm_name` and optional `gm_password` in request body
+   - Creates GM user record with UUID in database
+   - Returns GM user data with sandbox info
+   - Validates name (2-30 chars) and password (min 4 chars)
+
+2. ✅ `POST /api/sandbox/:id/message` - Now includes user IDs
+   - Added `sender_id` and `recipient_id` parameters
+   - Updated createMessage call to include user IDs
+   - Kept sender_name/recipient_name for denormalized display
+
+3. ✅ `POST /api/sandbox/:id/token` - Now tracks creator
+   - Added `created_by_user_id` parameter
+   - Stores creator user ID with token for future features
+
+4. ✅ `socketEvents.js` - User-based tracking system
+   - Changed `sandboxPlayers` to Map<sandboxId, Map<userId, playerData>>
+   - Added `socketToUser` Map for cleanup: Map<socketId, { sandboxId, userId }>
+   - Updated `join-sandbox` to accept { sandboxId, userId, userName, role }
+   - Prevents duplicate connections (emits `user-already-connected` error)
+   - Updated `players-list` to include userId in player data
+
+#### 13.5 Frontend Components Created - COMPLETED ✅
+
+**New Components:**
+1. ✅ `client/src/components/UserAuthModal.jsx` - Full authentication modal
+   - Tab 1: Create new player (name + optional password)
+   - Tab 2: Select existing player (dropdown + password if needed)
+   - Validates input, handles errors gracefully
+   - Auto-loads existing users for selection
+   - Saves to localStorage on success
+   - Clean, modern UI with loading states
+
+2. ✅ `client/src/components/EditNameModal.jsx` - Name editing modal
+   - Name input (pre-filled with current name)
+   - Password input (only shown if user has password)
+   - Calls PATCH endpoint with validation
+   - Updates localStorage on success
+   - Modal overlay with click-outside to close
+
+3. ✅ `client/src/styles/UserAuthModal.css` - Auth modal styles
+   - Dark theme matching application design
+   - Tabbed navigation with active states
+   - Form styling and error states
+
+4. ✅ `client/src/styles/EditNameModal.css` - Edit modal styles
+   - Consistent dark theme
+   - Form actions with primary/secondary buttons
+
+#### 13.6 Frontend Components Updated - COMPLETED ✅
+
+**Files Modified:**
+1. ✅ `client/src/pages/FrontPage.jsx`
+   - Added GM name input field (required)
+   - Added optional GM password field (collapsible with toggle button)
+   - Updated sandbox creation to send gm_name and gm_password
+   - Saves GM user to localStorage on success
+   - Redirects with user data ready for auto-login
+
+2. ✅ `client/src/pages/SandboxPage.jsx`
+   - Replaced CharacterNameModal with UserAuthModal
+   - Checks localStorage for saved user on mount
+   - Auto-authenticates users without passwords
+   - Shows auth modal for new users or password-protected users
+   - Stores full user object: { id, name, role, hasPassword }
+   - Passes currentUser to all child components
+
+3. ✅ `client/src/components/RightPanel.jsx`
+   - Updated to accept and pass currentUser prop
+   - Passes currentUser to TokenPanel, ChatPanel, PlayersPanel
+
+4. ✅ `client/src/components/PlayersPanel.jsx`
+   - Keys players by userId: `key={player.userId}`
+   - Added "Edit" (✎) button next to current user's name
+   - Shows EditNameModal on click
+   - Listens for `user-name-changed` socket event
+   - Updates displayed names in real-time
+   - Updates localStorage when current user's name changes
+
+5. ✅ `client/src/components/ChatPanel.jsx` - Complete refactor
+   - Uses userId for message routing and channel keys
+   - Sends sender_id and recipient_id with messages
+   - Filters messages by userId instead of characterName
+   - Listens for `user-name-changed` socket event
+   - Updates sender/recipient names in displayed messages
+   - Channel pills keyed by userId with name display
+   - Fetches messages with `?for_user=${userId}` query parameter
+
+6. ✅ `client/src/components/TokenPanel.jsx`
+   - Accepts currentUser prop
+   - Includes created_by_user_id when creating tokens
+   - Disables button if currentUser not available
+
+7. ✅ `client/src/components/ImageCanvas.jsx`
+   - Passes created_by_user_id to token creation endpoint
+   - Includes field from pendingToken data
+
+8. ✅ `client/src/hooks/useSocket.js`
+   - Accepts userId, userName, userRole parameters (instead of playerName, role)
+   - Emits `join-sandbox` with { sandboxId, userId, userName, role }
+   - Listens for `user-already-connected` error
+   - Returns connectionError in hook result
+   - Only connects if userId is available
+
+#### Implementation Summary
+
+**Total Files Modified:** 14 files
+**Total Files Created:** 4 files
+**Lines of Code Changed:** ~1,500 lines
+
+**Key Architecture Changes:**
+- Migrated from name-based to UUID-based user identification
+- Implemented dual tracking system (userId + socketId) for WebSockets
+- Added bcrypt password hashing with salt rounds of 10
+- Maintained denormalized names for performance while tracking user IDs
+- Implemented real-time name change propagation via socket events
+
+**Security Features:**
+- All passwords hashed with bcrypt before storage
+- Password validation (minimum 4 characters)
+- User authentication required for password-protected accounts
+- Duplicate connection prevention (one user per sandbox)
+
+**User Experience Features:**
+- LocalStorage persistence for seamless re-authentication
+- Auto-login for non-password users
+- Two-tab authentication modal (create new / use existing)
+- Real-time name updates across all UI components
+- Edit name functionality with password verification
+- Clean error handling and validation messages
+
+#### Testing Checklist (Ready for Testing)
+- [ ] Create sandbox with GM password
+- [ ] Create sandbox without GM password
+- [ ] Join as new player with password
+- [ ] Join as new player without password
+- [ ] Join as existing player from new device
+- [ ] Verify duplicate connection prevention
+- [ ] Test auto-join with localStorage
+- [ ] Edit player name (with password)
+- [ ] Edit player name (without password)
+- [ ] Verify name change in chat history
+- [ ] Verify name change in players panel
+- [ ] Test private messages route by userId
+- [ ] Test channel pills update on name change
+
+#### Use Cases (Reference)
+
+**Use Case #1: Creating New Sandbox**
+1. User on front page clicks "New Sandbox"
+2. Optional: User enters GM password
+3. Backend creates sandbox + GM user
+4. GM user saved to localStorage
+5. Redirect to sandbox page
+
+**Use Case #2.1: Player Joins (No Saved User)**
+1. User clicks join link
+2. Modal shows:
+   - Tab 1: Create new player (name + optional password)
+   - Tab 2: Select existing player (dropdown + password)
+3. On success: Save to localStorage, join sandbox
+4. If user already connected: Show error, prevent join
+
+**Use Case #2.2: Player Joins (Saved User)**
+1. Auto-load user from localStorage
+2. Attempt authentication (if password protected)
+3. If already connected: Show error
+4. If success: Join sandbox
+
+#### Implementation Notes
+- **Security**: All passwords hashed with bcrypt (salt rounds: 10)
+- **Validation**: Names 2-30 chars, passwords min 4 chars
+- **Backward Compatibility**: Kept sender_name/recipient_name in chat_messages for denormalization
+- **Real-time Updates**: Socket.io event `user-name-changed` broadcasts name changes
+- **Duplicate Prevention**: Track by userId in sandboxPlayers Map, reject duplicate sockets
+
+#### Result
+✅ **Phase 13 Complete** - Full user system implementation with UUID-based authentication, optional passwords, LocalStorage persistence, and real-time name updates. All backend and frontend components updated and integrated. System is ready for comprehensive testing.
 
 ---
 

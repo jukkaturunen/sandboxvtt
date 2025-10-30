@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import CharacterNameModal from '../components/CharacterNameModal';
+import UserAuthModal from '../components/UserAuthModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
 import RightPanel from '../components/RightPanel';
 import useSocket from '../hooks/useSocket';
+import { getUserForSandbox, saveUserForSandbox } from '../utils/userStorage';
 import '../styles/SandboxPage.css';
 
 function SandboxPage() {
@@ -14,31 +15,34 @@ function SandboxPage() {
 
   const [sandboxData, setSandboxData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [characterName, setCharacterName] = useState(null);
-  const [showNameModal, setShowNameModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const [pendingToken, setPendingToken] = useState(null);
   const [previewImage, setPreviewImage] = useState(null); // GM-only preview
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
-  const { socket } = useSocket(id, characterName, role);
+  const { socket } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
 
-  // Check localStorage for existing character name
+  // Check localStorage for existing user
   useEffect(() => {
-    const storageKey = `sandbox-${id}-character`;
-    const stored = localStorage.getItem(storageKey);
+    const savedUser = getUserForSandbox(id);
 
-    if (role === 'player') {
-      if (stored) {
-        setCharacterName(stored);
+    if (savedUser) {
+      // Attempt to authenticate saved user
+      if (savedUser.hasPassword) {
+        // User has password, show modal for auth
+        setShowAuthModal(true);
       } else {
-        setShowNameModal(true);
+        // No password, auto-login
+        setCurrentUser(savedUser);
       }
     } else {
-      // GM doesn't need a character name
-      setCharacterName('Game Master');
+      // No saved user, show auth modal
+      setShowAuthModal(true);
     }
-  }, [id, role]);
+  }, [id]);
 
   // Fetch sandbox data
   useEffect(() => {
@@ -57,11 +61,16 @@ function SandboxPage() {
       });
   }, [id]);
 
-  const handleCharacterNameSubmit = (name) => {
-    setCharacterName(name);
-    setShowNameModal(false);
+  const handleUserAuthSuccess = (userData) => {
+    setCurrentUser(userData);
+    setShowAuthModal(false);
+    setAuthError(null);
     // Save to localStorage
-    localStorage.setItem(`sandbox-${id}-character`, name);
+    saveUserForSandbox(id, userData);
+  };
+
+  const handleUserAuthError = (error) => {
+    setAuthError(error.message);
   };
 
   if (loading) {
@@ -83,8 +92,12 @@ function SandboxPage() {
 
   return (
     <div className="sandbox-page">
-      {showNameModal && (
-        <CharacterNameModal onSubmit={handleCharacterNameSubmit} />
+      {showAuthModal && (
+        <UserAuthModal
+          sandboxId={id}
+          onSuccess={handleUserAuthSuccess}
+          onError={handleUserAuthError}
+        />
       )}
 
       <div className="sandbox-layout">
@@ -141,8 +154,7 @@ function SandboxPage() {
           <RightPanel
             sandboxId={id}
             socket={socket}
-            characterName={characterName}
-            role={role}
+            currentUser={currentUser}
             onCreateToken={(token) => setPendingToken(token)}
             isPanelCollapsed={rightPanelCollapsed}
           />

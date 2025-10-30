@@ -116,7 +116,8 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
           name: pendingToken.name,
           color: pendingToken.color,
           position_x: centerX,
-          position_y: centerY
+          position_y: centerY,
+          created_by_user_id: pendingToken.created_by_user_id
         })
       });
 

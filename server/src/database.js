@@ -123,8 +123,8 @@ const clearActiveImages = db.prepare('UPDATE images SET is_active = 0 WHERE sand
 
 // Token operations
 const createToken = db.prepare(`
-  INSERT INTO tokens (sandbox_id, image_id, name, color, position_x, position_y)
-  VALUES (?, ?, ?, ?, ?, ?)
+  INSERT INTO tokens (sandbox_id, image_id, name, color, position_x, position_y, created_by_user_id)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
 `);
 const getTokens = db.prepare('SELECT * FROM tokens WHERE sandbox_id = ? ORDER BY created_at ASC');
 const getTokensByImage = db.prepare('SELECT * FROM tokens WHERE image_id = ? ORDER BY created_at ASC');
@@ -133,8 +133,8 @@ const deleteToken = db.prepare('DELETE FROM tokens WHERE id = ?');
 
 // Chat operations
 const createMessage = db.prepare(`
-  INSERT INTO chat_messages (sandbox_id, sender_name, sender_role, message, recipient_name, is_dice_roll, dice_command, dice_results)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO chat_messages (sandbox_id, sender_id, sender_name, sender_role, message, recipient_id, recipient_name, is_dice_roll, dice_command, dice_results)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 const getMessages = db.prepare('SELECT * FROM chat_messages WHERE sandbox_id = ? ORDER BY created_at ASC');
 const getMessagesForPlayer = db.prepare(`
@@ -147,6 +147,32 @@ const getMessagesForPlayer = db.prepare(`
     )
   ORDER BY created_at ASC
 `);
+const getMessagesForUser = db.prepare(`
+  SELECT * FROM chat_messages
+  WHERE sandbox_id = ?
+    AND (
+      recipient_id IS NULL
+      OR recipient_id = ?
+      OR sender_id = ?
+    )
+  ORDER BY created_at ASC
+`);
+const updateMessageSenderName = db.prepare(`
+  UPDATE chat_messages SET sender_name = ? WHERE sender_id = ?
+`);
+const updateMessageRecipientName = db.prepare(`
+  UPDATE chat_messages SET recipient_name = ? WHERE recipient_id = ?
+`);
+
+// User operations
+const createUser = db.prepare(`
+  INSERT INTO users (id, sandbox_id, name, role, password_hash)
+  VALUES (?, ?, ?, ?, ?)
+`);
+const getUserById = db.prepare('SELECT * FROM users WHERE id = ? AND sandbox_id = ?');
+const getUsersBySandbox = db.prepare('SELECT id, name, role, created_at FROM users WHERE sandbox_id = ? ORDER BY created_at ASC');
+const updateUserName = db.prepare('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
+const updateUserPassword = db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
 
 module.exports = {
   db,
@@ -169,4 +195,13 @@ module.exports = {
   createMessage,
   getMessages,
   getMessagesForPlayer,
+  getMessagesForUser,
+  updateMessageSenderName,
+  updateMessageRecipientName,
+  // Users
+  createUser,
+  getUserById,
+  getUsersBySandbox,
+  updateUserName,
+  updateUserPassword,
 };

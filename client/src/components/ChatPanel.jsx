@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import '../styles/ChatPanel.css';
 
-function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTab, onUnreadChange, isPanelCollapsed }) {
+function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnreadChange, isPanelCollapsed }) {
   const [allMessages, setAllMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [selectedChannel, setSelectedChannel] = useState('ALL');
+  const [selectedChannel, setSelectedChannel] = useState('ALL'); // 'ALL' or userId
   const [unreadChannels, setUnreadChannels] = useState(new Set());
   const [errorNotification, setErrorNotification] = useState(null);
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
 
-  // Load existing messages from database (filtered for current player)
+  // Load existing messages from database (filtered for current user)
   useEffect(() => {
     const loadMessages = async () => {
-      if (!characterName) return;
+      if (!currentUser) return;
 
       try {
-        const response = await fetch(`/api/sandbox/${sandboxId}/messages?for_player=${encodeURIComponent(characterName)}`);
+        const response = await fetch(`/api/sandbox/${sandboxId}/messages?for_user=${encodeURIComponent(currentUser.id)}`);
         if (response.ok) {
           const data = await response.json();
           setAllMessages(data);
@@ -27,25 +27,27 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
     };
 
     loadMessages();
-  }, [sandboxId, characterName]);
+  }, [sandboxId, currentUser]);
 
-  // Determine which channel a message belongs to
+  // Determine which channel a message belongs to (returns userId or 'ALL')
   const getMessageChannel = useCallback((message) => {
-    // ALL channel: recipient_name is null
-    if (message.recipient_name === null) {
+    if (!currentUser) return null;
+
+    // ALL channel: recipient_id is null
+    if (message.recipient_id === null) {
       return 'ALL';
     }
 
     // Private message: either sent to me or sent by me
-    if (message.recipient_name === characterName) {
-      return message.sender_name; // From sender
+    if (message.recipient_id === currentUser.id) {
+      return message.sender_id; // From sender (use sender's userId)
     }
-    if (message.sender_name === characterName) {
-      return message.recipient_name; // To recipient
+    if (message.sender_id === currentUser.id) {
+      return message.recipient_id; // To recipient (use recipient's userId)
     }
 
     return null; // Message not for this user
-  }, [characterName]);
+  }, [currentUser]);
 
   // Listen for new chat messages
   useEffect(() => {
@@ -85,19 +87,42 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
     };
   }, [socket, selectedChannel, isActiveTab, onUnreadChange, getMessageChannel]);
 
+  // Listen for user name changes to update displayed names
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserNameChanged = ({ userId, newName }) => {
+      setAllMessages(prevMessages =>
+        prevMessages.map(msg => ({
+          ...msg,
+          sender_name: msg.sender_id === userId ? newName : msg.sender_name,
+          recipient_name: msg.recipient_id === userId ? newName : msg.recipient_name
+        }))
+      );
+    };
+
+    socket.on('user-name-changed', handleUserNameChanged);
+
+    return () => {
+      socket.off('user-name-changed', handleUserNameChanged);
+    };
+  }, [socket]);
+
   // Filter messages based on selected channel
   const filteredMessages = useMemo(() => {
+    if (!currentUser) return [];
+
     if (selectedChannel === 'ALL') {
-      // Show only messages where recipient_name is null
-      return allMessages.filter(msg => msg.recipient_name === null);
+      // Show only messages where recipient_id is null
+      return allMessages.filter(msg => msg.recipient_id === null);
     } else {
-      // Show private messages between me and the selected player
+      // Show private messages between me and the selected player (by userId)
       return allMessages.filter(msg =>
-        (msg.sender_name === selectedChannel && msg.recipient_name === characterName) ||
-        (msg.sender_name === characterName && msg.recipient_name === selectedChannel)
+        (msg.sender_id === selectedChannel && msg.recipient_id === currentUser.id) ||
+        (msg.sender_id === currentUser.id && msg.recipient_id === selectedChannel)
       );
     }
-  }, [allMessages, selectedChannel, characterName]);
+  }, [allMessages, selectedChannel, currentUser]);
 
   // Auto-scroll to bottom when filtered messages change
   // Only scroll if panel is not collapsed to prevent browser from forcing panel open
@@ -109,10 +134,10 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
 
   // Auto-focus message input when chat tab becomes active
   useEffect(() => {
-    if (isActiveTab && characterName) {
+    if (isActiveTab && currentUser) {
       messageInputRef.current?.focus();
     }
-  }, [isActiveTab, characterName]);
+  }, [isActiveTab, currentUser]);
 
   // Show error notification
   const showErrorNotification = (message) => {
@@ -137,18 +162,30 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !characterName) return;
+    if (!newMessage.trim() || !currentUser) return;
 
     try {
-      const recipientName = selectedChannel === 'ALL' ? null : selectedChannel;
+      // Get recipient info
+      let recipientId = null;
+      let recipientName = null;
+
+      if (selectedChannel !== 'ALL') {
+        const recipient = players.find(p => p.userId === selectedChannel);
+        if (recipient) {
+          recipientId = recipient.userId;
+          recipientName = recipient.name;
+        }
+      }
 
       const response = await fetch(`/api/sandbox/${sandboxId}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sender_name: characterName,
-          sender_role: role || 'player',
+          sender_id: currentUser.id,
+          sender_name: currentUser.name,
+          sender_role: currentUser.role || 'player',
           message: newMessage.trim(),
+          recipient_id: recipientId,
           recipient_name: recipientName
         })
       });
@@ -189,17 +226,26 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
     }
   };
 
-  // Build channel list: ALL + all other players
+  // Build channel list: ALL + all other players (keyed by userId)
   const availableChannels = useMemo(() => {
-    const channels = ['ALL'];
+    if (!currentUser) return [{ id: 'ALL', name: 'ALL' }];
+
+    const channels = [{ id: 'ALL', name: 'ALL' }];
     // Add all players except current user
     players.forEach(player => {
-      if (player.name !== characterName) {
-        channels.push(player.name);
+      if (player.userId !== currentUser.id) {
+        channels.push({ id: player.userId, name: player.name });
       }
     });
     return channels;
-  }, [players, characterName]);
+  }, [players, currentUser]);
+
+  // Get recipient name for a selected channel
+  const getSelectedChannelName = () => {
+    if (selectedChannel === 'ALL') return 'ALL';
+    const player = players.find(p => p.userId === selectedChannel);
+    return player ? player.name : selectedChannel;
+  };
 
   return (
     <div className="chat-panel">
@@ -207,11 +253,11 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
       <div className="chat-channels">
         {availableChannels.map(channel => (
           <button
-            key={channel}
-            className={`channel-pill ${selectedChannel === channel ? 'selected' : ''} ${unreadChannels.has(channel) ? 'unread' : ''}`}
-            onClick={() => handleChannelSelect(channel)}
+            key={channel.id}
+            className={`channel-pill ${selectedChannel === channel.id ? 'selected' : ''} ${unreadChannels.has(channel.id) ? 'unread' : ''}`}
+            onClick={() => handleChannelSelect(channel.id)}
           >
-            {channel}
+            {channel.name}
           </button>
         ))}
       </div>
@@ -222,7 +268,7 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
           <div className="chat-empty">
             {selectedChannel === 'ALL'
               ? 'No messages yet. Start the conversation!'
-              : `No messages with ${selectedChannel} yet.`
+              : `No messages with ${getSelectedChannelName()} yet.`
             }
           </div>
         ) : (
@@ -253,21 +299,21 @@ function ChatPanel({ sandboxId, socket, characterName, role, players, isActiveTa
           type="text"
           className="chat-input"
           placeholder={
-            !characterName
-              ? "Set your name first..."
+            !currentUser
+              ? "Authenticating..."
               : selectedChannel === 'ALL'
                 ? "Message to all..."
-                : `Message to ${selectedChannel}...`
+                : `Message to ${getSelectedChannelName()}...`
           }
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          disabled={!characterName}
+          disabled={!currentUser}
           maxLength={500}
         />
         <button
           type="submit"
           className="chat-send-button"
-          disabled={!newMessage.trim() || !characterName}
+          disabled={!newMessage.trim() || !currentUser}
         >
           Send
         </button>

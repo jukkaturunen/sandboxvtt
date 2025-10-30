@@ -3,6 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 const db = require('./database');
 const { processDiceRoll } = require('./diceRoller');
 
@@ -51,15 +53,44 @@ module.exports = function(io) {
   const router = express.Router();
 
   // POST /api/sandbox - Create new sandbox
-  router.post('/sandbox', (req, res) => {
+  router.post('/sandbox', async (req, res) => {
     try {
+      const { gm_name, gm_password } = req.body;
+
+      // Validate GM name
+      if (!gm_name || gm_name.length < 2 || gm_name.length > 30) {
+        return res.status(400).json({ error: 'GM name must be between 2 and 30 characters' });
+      }
+
+      // Validate password if provided
+      if (gm_password && gm_password.length < 4) {
+        return res.status(400).json({ error: 'Password must be at least 4 characters' });
+      }
+
       const sandboxId = generateSandboxId();
       db.createSandbox.run(sandboxId);
-      
+
+      // Create GM user
+      const gmUserId = uuidv4();
+      let passwordHash = null;
+      if (gm_password) {
+        passwordHash = await bcrypt.hash(gm_password, 10);
+      }
+
+      db.createUser.run(gmUserId, sandboxId, gm_name, 'gm', passwordHash);
+
+      // Return sandbox and GM user data
       res.json({
         id: sandboxId,
         gmUrl: `/sandbox/${sandboxId}?role=gm`,
-        playerUrl: `/sandbox/${sandboxId}?role=player`
+        playerUrl: `/sandbox/${sandboxId}?role=player`,
+        gmUser: {
+          id: gmUserId,
+          name: gm_name,
+          role: 'gm',
+          sandbox_id: sandboxId,
+          hasPassword: !!gm_password
+        }
       });
     } catch (error) {
       console.error('Error creating sandbox:', error);
@@ -177,14 +208,14 @@ module.exports = function(io) {
   router.post('/sandbox/:id/token', (req, res) => {
     try {
       const sandboxId = req.params.id;
-      const { image_id, name, color, position_x, position_y } = req.body;
-      
+      const { image_id, name, color, position_x, position_y, created_by_user_id } = req.body;
+
       if (!image_id || !name || !color || position_x === undefined || position_y === undefined) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
-      
-      const result = db.createToken.run(sandboxId, image_id, name, color, position_x, position_y);
-      
+
+      const result = db.createToken.run(sandboxId, image_id, name, color, position_x, position_y, created_by_user_id || null);
+
       const tokenData = {
         id: result.lastInsertRowid,
         sandbox_id: sandboxId,
@@ -192,12 +223,13 @@ module.exports = function(io) {
         name,
         color,
         position_x,
-        position_y
+        position_y,
+        created_by_user_id: created_by_user_id || null
       };
-      
+
       // Emit socket event to notify all clients
       io.to(sandboxId).emit('token-created', tokenData);
-      
+
       res.json(tokenData);
     } catch (error) {
       console.error('Error creating token:', error);
@@ -252,12 +284,12 @@ module.exports = function(io) {
   router.get('/sandbox/:id/messages', (req, res) => {
     try {
       const sandboxId = req.params.id;
-      const playerName = req.query.for_player;
+      const userId = req.query.for_user;
 
-      // If for_player query param is provided, filter messages for that player
+      // If for_user query param is provided, filter messages for that user
       let messages;
-      if (playerName) {
-        messages = db.getMessagesForPlayer.all(sandboxId, playerName, playerName);
+      if (userId) {
+        messages = db.getMessagesForUser.all(sandboxId, userId, userId);
       } else {
         // Return all messages (for backward compatibility)
         messages = db.getMessages.all(sandboxId);
@@ -274,13 +306,14 @@ module.exports = function(io) {
   router.post('/sandbox/:id/message', (req, res) => {
     try {
       const sandboxId = req.params.id;
-      const { sender_name, sender_role, message, recipient_name } = req.body;
+      const { sender_id, sender_name, sender_role, message, recipient_id, recipient_name } = req.body;
 
-      if (!sender_name || !sender_role || !message) {
+      if (!sender_id || !sender_name || !sender_role || !message) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      // recipient_name is optional - null means message to ALL
+      // recipient_id/recipient_name are optional - null means message to ALL
+      const recipientId = recipient_id || null;
       const recipientName = recipient_name || null;
 
       // Check if this is a dice roll command
@@ -315,9 +348,11 @@ module.exports = function(io) {
 
       const result = db.createMessage.run(
         sandboxId,
+        sender_id,
         sender_name,
         sender_role,
         finalMessage,
+        recipientId,
         recipientName,
         isDiceRoll,
         diceCommand,
@@ -327,9 +362,11 @@ module.exports = function(io) {
       const messageData = {
         id: result.lastInsertRowid,
         sandbox_id: sandboxId,
+        sender_id,
         sender_name,
         sender_role,
         message: finalMessage,
+        recipient_id: recipientId,
         recipient_name: recipientName,
         is_dice_roll: isDiceRoll,
         dice_command: diceCommand,
@@ -344,6 +381,190 @@ module.exports = function(io) {
     } catch (error) {
       console.error('Error creating message:', error);
       res.status(500).json({ error: 'Failed to create message' });
+    }
+  });
+
+  // ========== USER ENDPOINTS ==========
+
+  // POST /api/sandbox/:sandboxId/user - Create new user
+  router.post('/sandbox/:sandboxId/user', async (req, res) => {
+    try {
+      const { sandboxId } = req.params;
+      const { name, role, password } = req.body;
+
+      // Validate required fields
+      if (!name || !role) {
+        return res.status(400).json({ error: 'Name and role are required' });
+      }
+
+      // Validate name length
+      if (name.length < 2 || name.length > 30) {
+        return res.status(400).json({ error: 'Name must be between 2 and 30 characters' });
+      }
+
+      // Validate role
+      if (!['gm', 'player'].includes(role)) {
+        return res.status(400).json({ error: 'Role must be "gm" or "player"' });
+      }
+
+      // Validate password if provided
+      if (password && password.length < 4) {
+        return res.status(400).json({ error: 'Password must be at least 4 characters' });
+      }
+
+      // Check if sandbox exists
+      const sandbox = db.getSandbox.get(sandboxId);
+      if (!sandbox) {
+        return res.status(404).json({ error: 'Sandbox not found' });
+      }
+
+      // Generate user ID
+      const userId = uuidv4();
+
+      // Hash password if provided
+      let passwordHash = null;
+      if (password) {
+        passwordHash = await bcrypt.hash(password, 10);
+      }
+
+      // Create user
+      db.createUser.run(userId, sandboxId, name, role, passwordHash);
+
+      // Return user data (without password hash)
+      const userData = {
+        id: userId,
+        sandbox_id: sandboxId,
+        name,
+        role,
+        created_at: new Date().toISOString()
+      };
+
+      res.json(userData);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // GET /api/sandbox/:sandboxId/users - List all users in sandbox
+  router.get('/sandbox/:sandboxId/users', (req, res) => {
+    try {
+      const { sandboxId } = req.params;
+
+      // Check if sandbox exists
+      const sandbox = db.getSandbox.get(sandboxId);
+      if (!sandbox) {
+        return res.status(404).json({ error: 'Sandbox not found' });
+      }
+
+      // Get all users (without password hashes)
+      const users = db.getUsersBySandbox.all(sandboxId);
+
+      res.json(users);
+    } catch (error) {
+      console.error('Error getting users:', error);
+      res.status(500).json({ error: 'Failed to get users' });
+    }
+  });
+
+  // POST /api/sandbox/:sandboxId/user/:userId/auth - Authenticate user
+  router.post('/sandbox/:sandboxId/user/:userId/auth', async (req, res) => {
+    try {
+      const { sandboxId, userId } = req.params;
+      const { password } = req.body;
+
+      // Get user
+      const user = db.getUserById.get(userId, sandboxId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check password if user has one
+      if (user.password_hash) {
+        if (!password) {
+          return res.status(400).json({ error: 'Password required' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatch) {
+          return res.status(401).json({ error: 'Invalid password' });
+        }
+      }
+
+      // Authentication successful
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          sandbox_id: user.sandbox_id
+        }
+      });
+    } catch (error) {
+      console.error('Error authenticating user:', error);
+      res.status(500).json({ error: 'Failed to authenticate user' });
+    }
+  });
+
+  // PATCH /api/sandbox/:sandboxId/user/:userId - Update user name
+  router.patch('/sandbox/:sandboxId/user/:userId', async (req, res) => {
+    try {
+      const { sandboxId, userId } = req.params;
+      const { name, password } = req.body;
+
+      // Validate name
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+
+      if (name.length < 2 || name.length > 30) {
+        return res.status(400).json({ error: 'Name must be between 2 and 30 characters' });
+      }
+
+      // Get user
+      const user = db.getUserById.get(userId, sandboxId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check password if user has one
+      if (user.password_hash) {
+        if (!password) {
+          return res.status(400).json({ error: 'Password required' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatch) {
+          return res.status(401).json({ error: 'Invalid password' });
+        }
+      }
+
+      // Update user name
+      db.updateUserName.run(name, userId, sandboxId);
+
+      // Update denormalized names in chat messages
+      db.updateMessageSenderName.run(name, userId);
+      db.updateMessageRecipientName.run(name, userId);
+
+      // Emit socket event to notify all clients
+      io.to(sandboxId).emit('user-name-changed', {
+        userId,
+        oldName: user.name,
+        newName: name
+      });
+
+      res.json({
+        success: true,
+        user: {
+          id: userId,
+          name,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ error: 'Failed to update user' });
     }
   });
 

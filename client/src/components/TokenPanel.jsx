@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/TokenPanel.css';
 
-function TokenPanel({ onCreateToken }) {
+function TokenPanel({ currentUser, onCreateToken }) {
   const [tokenName, setTokenName] = useState('');
   const [tokenColor, setTokenColor] = useState('#ff6b6b');
   const nameInputRef = useRef(null);
@@ -29,7 +29,7 @@ function TokenPanel({ onCreateToken }) {
   const handleCreateToken = () => {
     const trimmedName = tokenName.trim();
 
-    if (!trimmedName) {
+    if (!trimmedName || !currentUser) {
       return; // Button is already disabled, so this shouldn't happen
     }
 
@@ -40,6 +40,7 @@ function TokenPanel({ onCreateToken }) {
     onCreateToken({
       name: trimmedName,
       color: tokenColor,
+      created_by_user_id: currentUser.id,
     });
 
     // Clear form
@@ -80,7 +81,7 @@ function TokenPanel({ onCreateToken }) {
         <button
           onClick={handleCreateToken}
           className="create-token-button"
-          disabled={!tokenName.trim()}
+          disabled={!tokenName.trim() || !currentUser}
         >
           {tokenName.trim() ? 'Add to Map' : 'Give Token a Name'}
         </button>
