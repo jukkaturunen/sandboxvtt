@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import '../styles/UserAuthModal.css';
 
-function UserAuthModal({ sandboxId, onSuccess, onError }) {
+function UserAuthModal({ sandboxId, onSuccess, onError, initialError = '' }) {
   const [activeTab, setActiveTab] = useState('create'); // 'create' or 'existing'
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [existingUsers, setExistingUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Load existing users when component mounts or when switching to existing tab

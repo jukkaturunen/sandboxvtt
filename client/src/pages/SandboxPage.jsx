@@ -22,7 +22,7 @@ function SandboxPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
-  const { socket } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
+  const { socket, connectionError } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
 
   // Check localStorage for existing user
   useEffect(() => {
@@ -73,6 +73,17 @@ function SandboxPage() {
     navigate('/');
   };
 
+  // Handle connection error (e.g., user already connected)
+  useEffect(() => {
+    if (connectionError) {
+      // Log out the user and show error
+      clearUserForSandbox(id);
+      setCurrentUser(null);
+      setShowAuthModal(true);
+      setAuthError(connectionError);
+    }
+  }, [connectionError, id]);
+
   if (loading) {
     return (
       <div className="sandbox-page loading">
@@ -97,6 +108,7 @@ function SandboxPage() {
           sandboxId={id}
           onSuccess={handleUserAuthSuccess}
           onError={handleUserAuthError}
+          initialError={authError}
         />
       )}
 
