@@ -239,7 +239,6 @@ function UserAuthModal({ sandboxId, onSuccess, onError }) {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
                       required
-                      minLength={4}
                     />
                   </div>
                 )}

@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import UserAuthModal from '../components/UserAuthModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
 import RightPanel from '../components/RightPanel';
 import useSocket from '../hooks/useSocket';
-import { getUserForSandbox, saveUserForSandbox } from '../utils/userStorage';
+import { getUserForSandbox, saveUserForSandbox, clearUserForSandbox } from '../utils/userStorage';
 import '../styles/SandboxPage.css';
 
 function SandboxPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [sandboxData, setSandboxData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,13 @@ function SandboxPage() {
     setAuthError(error.message);
   };
 
+  const handleLogout = () => {
+    // Clear user from localStorage
+    clearUserForSandbox(id);
+    // Redirect to front page
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div className="sandbox-page loading">
@@ -109,6 +117,16 @@ function SandboxPage() {
 
             {/* Header Container - Right side controls */}
             <div className={`header-container ${rightPanelCollapsed ? 'collapsed' : ''}`}>
+              {/* Logout button */}
+              {currentUser && (
+                <button
+                  className="logout-button"
+                  onClick={handleLogout}
+                  title="Logout"
+                >
+                  Logout
+                </button>
+              )}
               {/* Right collapse arrow */}
               <button
                 className="collapse-arrow right"
