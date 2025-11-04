@@ -4,14 +4,14 @@ import ChatPanel from './ChatPanel';
 import PlayersPanel from './PlayersPanel';
 import '../styles/RightPanel.css';
 
-function RightPanel({ sandboxId, socket, currentUser, onCreateToken, isPanelCollapsed }) {
+function RightPanel({ sandboxId, socket, isConnected, currentUser, onCreateToken, isPanelCollapsed }) {
   const [activeTab, setActiveTab] = useState('tokens');
   const [players, setPlayers] = useState([]);
   const [chatHasUnread, setChatHasUnread] = useState(false);
 
   // Listen for player list updates from socket
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !isConnected) return;
 
     const handlePlayersList = (playersList) => {
       setPlayers(playersList);
@@ -23,7 +23,7 @@ function RightPanel({ sandboxId, socket, currentUser, onCreateToken, isPanelColl
     return () => {
       socket.off('players-list', handlePlayersList);
     };
-  }, [socket]);
+  }, [socket, isConnected]);
 
   // Clear chat unread indicator when switching to chat tab
   useEffect(() => {
@@ -81,6 +81,7 @@ function RightPanel({ sandboxId, socket, currentUser, onCreateToken, isPanelColl
           <PlayersPanel
             sandboxId={sandboxId}
             socket={socket}
+            isConnected={isConnected}
             currentUser={currentUser}
           />
         </div>

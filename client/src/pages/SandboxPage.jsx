@@ -183,6 +183,7 @@ function SandboxPage() {
           <RightPanel
             sandboxId={id}
             socket={socket}
+            isConnected={isConnected}
             currentUser={currentUser}
             onCreateToken={(token) => setPendingToken(token)}
             isPanelCollapsed={rightPanelCollapsed}

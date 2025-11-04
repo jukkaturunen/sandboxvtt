@@ -3,22 +3,20 @@ import EditNameModal from './EditNameModal';
 import { updateUserNameInStorage } from '../utils/userStorage';
 import '../styles/PlayersPanel.css';
 
-function PlayersPanel({ sandboxId, socket, currentUser }) {
+function PlayersPanel({ sandboxId, socket, isConnected, currentUser }) {
   const [players, setPlayers] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !isConnected) return;
 
     // Handle players list updates (sent on join, leave, disconnect)
     const handlePlayersList = (playersList) => {
-      console.log('Received players list:', playersList);
       setPlayers(playersList);
     };
 
     // Handle user name changes
     const handleUserNameChanged = ({ userId, newName }) => {
-      console.log('User name changed:', userId, newName);
       setPlayers(prevPlayers =>
         prevPlayers.map(player =>
           player.userId === userId ? { ...player, name: newName } : player
@@ -36,7 +34,6 @@ function PlayersPanel({ sandboxId, socket, currentUser }) {
     socket.on('user-name-changed', handleUserNameChanged);
 
     // Request the current player list
-    console.log('Requesting player list...');
     socket.emit('request-players-list');
 
     // Cleanup
@@ -44,9 +41,9 @@ function PlayersPanel({ sandboxId, socket, currentUser }) {
       socket.off('players-list', handlePlayersList);
       socket.off('user-name-changed', handleUserNameChanged);
     };
-  }, [socket, sandboxId, currentUser]);
+  }, [socket, isConnected, sandboxId, currentUser]);
 
-  const handleEditNameSuccess = (updatedUser) => {
+  const handleEditNameSuccess = () => {
     // Update will come through socket event, just close modal
     setShowEditModal(false);
   };
