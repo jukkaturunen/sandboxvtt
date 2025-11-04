@@ -229,18 +229,20 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
   };
 
   const findTokenAtPosition = (clientX, clientY) => {
-    if (!containerRef.current) return null;
+    if (!containerRef.current || !imageRef.current) return null;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (clientX - rect.left - position.x) / scale;
-    const y = (clientY - rect.top - position.y) / scale;
+    const imageRect = imageRef.current.getBoundingClientRect();
+
+    // Calculate position relative to the image element (which is transformed)
+    const x = (clientX - imageRect.left) / scale;
+    const y = (clientY - imageRect.top) / scale;
 
     // Check tokens in reverse order (top to bottom)
     for (let i = tokens.length - 1; i >= 0; i--) {
       const token = tokens[i];
-      if (!activeImage || token.image_id !== activeImage.id) continue;
+      if (!displayImage || token.image_id !== displayImage.id) continue;
 
-      const tokenRadius = 20 / scale; // Token radius accounting for scale
+      const tokenRadius = 20; // Token radius in image coordinates
       const dx = x - token.position_x;
       const dy = y - token.position_y;
       const distance = Math.sqrt(dx * dx + dy * dy);
