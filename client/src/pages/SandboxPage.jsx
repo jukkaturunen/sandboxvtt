@@ -150,21 +150,20 @@ function SandboxPage() {
               />
             )}
 
-            {/* SHEET link - only for non-GM users */}
-            {currentUser?.role === 'player' && (
-              <button
-                className="sheet-link"
-                onClick={() => handleOpenSheet(currentUser.id, currentUser.name)}
-                title="Open Character Sheet"
-              >
-                SHEET
-              </button>
-            )}
-
             <div className="header-spacer"></div>
 
             {/* Header Container - Right side controls */}
             <div className={`header-container ${rightPanelCollapsed ? 'collapsed' : ''}`}>
+              {/* SHEET link - only for non-GM users */}
+              {currentUser?.role === 'player' && (
+                <button
+                  className="sheet-link"
+                  onClick={() => handleOpenSheet(currentUser.id, currentUser.name)}
+                  title="Open Character Sheet"
+                >
+                  SHEET
+                </button>
+              )}
               {/* Current user name */}
               {currentUser && (
                 <span className="current-user-name">

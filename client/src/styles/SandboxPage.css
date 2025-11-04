@@ -113,14 +113,10 @@
 
 /* SHEET link button */
 .sheet-link {
-  position: absolute;
-  left: 20px;
-  top: 0;
-  height: 43px;
   background: none;
   border: none;
   color: white;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   padding: 0 1rem;
