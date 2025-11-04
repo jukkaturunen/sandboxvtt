@@ -15,6 +15,7 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
   const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef(null);
   const imageRef = useRef(null);
+  const savedStateRef = useRef(null); // Store canvas state before preview
 
   // Determine which image to display (preview takes priority for GM)
   const displayImage = gmPreviewImage || activeImage;
@@ -100,11 +101,24 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
     }
   }, [pendingToken]);
 
-  // When GM preview image changes, reset and center the new image
+  // When GM preview image changes, save/restore canvas state
   useEffect(() => {
-    if (gmPreviewImage) {
+    if (gmPreviewImage && !savedStateRef.current) {
+      // Entering preview mode - save current state (only once)
+      savedStateRef.current = {
+        scale: scale,
+        position: { ...position }
+      };
+      // Reset to trigger centering of preview image
       setImageLoaded(false);
+    } else if (!gmPreviewImage && savedStateRef.current) {
+      // Exiting preview mode - restore saved state
+      setScale(savedStateRef.current.scale);
+      setPosition(savedStateRef.current.position);
+      savedStateRef.current = null;
+      // Don't reset imageLoaded - we want to keep the restored state
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gmPreviewImage]);
 
   const placeTokenAtCenter = async () => {
