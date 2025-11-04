@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/ImageCanvas.css';
 
-function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreviewImage, rightPanelCollapsed }) {
+function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlaced, gmPreviewImage, rightPanelCollapsed }) {
   const [activeImage, setActiveImage] = useState(null);
   const [tokens, setTokens] = useState([]);
   const [scale, setScale] = useState(1);
@@ -19,44 +19,8 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
   // Determine which image to display (preview takes priority for GM)
   const displayImage = gmPreviewImage || activeImage;
 
-  // Fetch active image and tokens on mount
-  useEffect(() => {
-    fetchActiveImage();
-    fetchTokens();
-  }, [sandboxId]);
-
-  // Listen for socket events
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on('active-view-changed', () => {
-      fetchActiveImage();
-    });
-
-    socket.on('token-created', (token) => {
-      setTokens(prev => [...prev, token]);
-    });
-
-    socket.on('token-moved', ({ tokenId, position_x, position_y }) => {
-      setTokens(prev => prev.map(t =>
-        t.id === tokenId ? { ...t, position_x, position_y } : t
-      ));
-    });
-
-    socket.on('token-deleted', ({ tokenId }) => {
-      setTokens(prev => prev.filter(t => t.id !== tokenId));
-      setContextMenu(null);
-    });
-
-    return () => {
-      socket.off('active-view-changed');
-      socket.off('token-created');
-      socket.off('token-moved');
-      socket.off('token-deleted');
-    };
-  }, [socket]);
-
-  const fetchActiveImage = async () => {
+  // Fetch functions with useCallback to prevent unnecessary re-renders
+  const fetchActiveImage = useCallback(async () => {
     try {
       const response = await fetch(`/api/sandbox/${sandboxId}/images`);
       const images = await response.json();
@@ -73,9 +37,9 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     } catch (error) {
       console.error('Error fetching active image:', error);
     }
-  };
+  }, [sandboxId]);
 
-  const fetchTokens = async () => {
+  const fetchTokens = useCallback(async () => {
     try {
       const response = await fetch(`/api/sandbox/${sandboxId}/tokens`);
       const data = await response.json();
@@ -83,7 +47,51 @@ function ImageCanvas({ sandboxId, socket, pendingToken, onTokenPlaced, gmPreview
     } catch (error) {
       console.error('Error fetching tokens:', error);
     }
-  };
+  }, [sandboxId]);
+
+  // Fetch active image and tokens on mount
+  useEffect(() => {
+    fetchActiveImage();
+    fetchTokens();
+  }, [fetchActiveImage, fetchTokens]);
+
+  // Listen for socket events - triggers when socket connects
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+
+    const handleActiveViewChanged = () => {
+      fetchActiveImage();
+    };
+
+    const handleTokenCreated = (token) => {
+      setTokens(prev => [...prev, token]);
+    };
+
+    const handleTokenMoved = ({ tokenId, position_x, position_y }) => {
+      setTokens(prev => prev.map(t =>
+        t.id === tokenId ? { ...t, position_x, position_y } : t
+      ));
+    };
+
+    const handleTokenDeleted = ({ tokenId }) => {
+      setTokens(prev => prev.filter(t => t.id !== tokenId));
+      setContextMenu(null);
+    };
+
+    socket.on('active-view-changed', handleActiveViewChanged);
+    socket.on('token-created', handleTokenCreated);
+    socket.on('token-moved', handleTokenMoved);
+    socket.on('token-deleted', handleTokenDeleted);
+
+    return () => {
+      socket.off('active-view-changed', handleActiveViewChanged);
+      socket.off('token-created', handleTokenCreated);
+      socket.off('token-moved', handleTokenMoved);
+      socket.off('token-deleted', handleTokenDeleted);
+    };
+  }, [socket, isConnected, fetchActiveImage]);
 
   // Handle pending token - place at center when token is created
   useEffect(() => {

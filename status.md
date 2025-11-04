@@ -1055,9 +1055,63 @@ All major features production-ready with excellent UX. Ready for Phase 11 - Test
 
 ---
 
+## Recent Bug Fixes (2025-11-04)
+
+### Token Movement Bug - FIXED ✅
+**Issue**: Tokens were stuck to the map - when trying to drag them, the entire canvas would move instead.
+
+**Root Cause**: The `findTokenAtPosition` function was calculating click coordinates relative to the container and manually subtracting canvas pan offsets, but tokens are positioned within the transformed image wrapper which already has the transform applied.
+
+**Solution**:
+- Changed coordinate calculation to use `imageRect.getBoundingClientRect()` directly
+- Click position now calculated relative to the image's actual screen position (which includes transforms)
+- Removed manual `position.x/position.y` offset subtraction
+- Fixed token radius to use image coordinates (20px) instead of scaled coordinates
+
+**Files Modified**:
+- `client/src/components/ImageCanvas.jsx` (lines 231-256)
+
+### Real-Time Updates Bug - FIXED ✅
+**Issue**: Changes to tokens and active view required page reload to appear in the UI. Socket events were not being received.
+
+**Root Cause**: Multiple issues in the socket connection lifecycle:
+1. Socket was stored in a ref (`socketRef.current`) which doesn't trigger re-renders when it changes
+2. Socket event listeners were set up before the socket connected
+3. User ID was missing from localStorage, causing `useSocket` to return early with `userId = undefined`
+4. `userStorage.js` was saving user data with `userId` field instead of `id` field
+
+**Solution**:
+1. **useSocket Hook Refactor** (`client/src/hooks/useSocket.js`):
+   - Added socket to state: `const [socket, setSocket] = useState(null)`
+   - Socket now triggers re-renders when it changes from `null` to connected
+   - Explicitly set `socket` and `isConnected` states when userId is unavailable
+
+2. **ImageCanvas Component** (`client/src/components/ImageCanvas.jsx`):
+   - Added `isConnected` prop to component signature
+   - Socket event listeners only set up when `socket && isConnected` are both true
+   - Used `useCallback` for fetch functions to prevent unnecessary re-renders
+   - Proper dependency arrays in all `useEffect` hooks
+
+3. **SandboxPage Component** (`client/src/pages/SandboxPage.jsx`):
+   - Pass `isConnected` prop from `useSocket` to `ImageCanvas`
+   - Updated destructuring to include `isConnected`
+
+4. **User Storage Fix** (`client/src/utils/userStorage.js`):
+   - Changed `userId` field to `id` in `saveUserForSandbox` function
+   - Added backwards compatibility: `id: userData.id || userData.userId`
+   - Fixed property name mismatch that prevented user ID from being saved
+
+**Files Modified**:
+- `client/src/hooks/useSocket.js` (lines 5-7, 10-16, 29-33, 107)
+- `client/src/components/ImageCanvas.jsx` (lines 4, 22-52, 58-94)
+- `client/src/pages/SandboxPage.jsx` (lines 25, 157-165)
+- `client/src/utils/userStorage.js` (lines 29, 37-42)
+
+**Result**: Real-time updates now work correctly. Tokens can be created, moved, and deleted with instant synchronization across all clients. Active view changes propagate immediately without page reload.
+
 ## Known Issues
 
-_None yet_
+_None currently_
 
 ---
 

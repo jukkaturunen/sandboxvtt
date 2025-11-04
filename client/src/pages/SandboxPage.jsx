@@ -22,7 +22,7 @@ function SandboxPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
-  const { socket, connectionError } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
+  const { socket, isConnected, connectionError } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
 
   // Check localStorage for existing user
   useEffect(() => {
@@ -157,6 +157,7 @@ function SandboxPage() {
             <ImageCanvas
               sandboxId={id}
               socket={socket}
+              isConnected={isConnected}
               pendingToken={pendingToken}
               onTokenPlaced={() => setPendingToken(null)}
               gmPreviewImage={currentUser?.role === 'gm' ? previewImage : null}

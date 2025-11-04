@@ -26,7 +26,7 @@ export function getUserForSandbox(sandboxId) {
  * Save user data for a specific sandbox
  * @param {string} sandboxId - The sandbox ID
  * @param {Object} userData - User data to save
- * @param {string} userData.userId - User ID
+ * @param {string} userData.id - User ID
  * @param {string} userData.name - User name
  * @param {string} userData.role - User role ('gm' or 'player')
  * @param {boolean} userData.hasPassword - Whether user has a password
@@ -35,7 +35,7 @@ export function saveUserForSandbox(sandboxId, userData) {
   try {
     const key = `sandbox-${sandboxId}-user`;
     const data = {
-      userId: userData.userId,
+      id: userData.id || userData.userId, // Support both for backwards compatibility
       name: userData.name,
       role: userData.role,
       hasPassword: userData.hasPassword || false
