@@ -3,7 +3,7 @@ import EditNameModal from './EditNameModal';
 import { updateUserNameInStorage } from '../utils/userStorage';
 import '../styles/PlayersPanel.css';
 
-function PlayersPanel({ sandboxId, socket, isConnected, currentUser }) {
+function PlayersPanel({ sandboxId, socket, isConnected, currentUser, onOpenSheet }) {
   const [players, setPlayers] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -87,6 +87,16 @@ function PlayersPanel({ sandboxId, socket, isConnected, currentUser }) {
                 </div>
                 <div className="player-role">{player.role === 'gm' ? 'Game Master' : 'Player'}</div>
               </div>
+              {/* Sheet button - show for own sheet (player) or all sheets (GM) */}
+              {currentUser && (player.userId === currentUser.id || currentUser.role === 'gm') && player.role !== 'gm' && (
+                <button
+                  className="sheet-btn"
+                  onClick={() => onOpenSheet(player.userId, player.name)}
+                  title={player.userId === currentUser.id ? "Open your character sheet" : `Open ${player.name}'s character sheet`}
+                >
+                  📄
+                </button>
+              )}
             </div>
           ))
         )}

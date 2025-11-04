@@ -4,6 +4,7 @@ import UserAuthModal from '../components/UserAuthModal';
 import GMPanel from '../components/GMPanel';
 import ImageCanvas from '../components/ImageCanvas';
 import RightPanel from '../components/RightPanel';
+import CharacterSheetModal from '../components/CharacterSheetModal';
 import useSocket from '../hooks/useSocket';
 import { getUserForSandbox, saveUserForSandbox, clearUserForSandbox } from '../utils/userStorage';
 import '../styles/SandboxPage.css';
@@ -21,6 +22,9 @@ function SandboxPage() {
   const [previewImage, setPreviewImage] = useState(null); // GM-only preview
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [sheetModalOpen, setSheetModalOpen] = useState(false);
+  const [sheetUserId, setSheetUserId] = useState(null);
+  const [sheetUserName, setSheetUserName] = useState(null);
 
   const { socket, isConnected, connectionError } = useSocket(id, currentUser?.id, currentUser?.name, currentUser?.role);
 
@@ -73,6 +77,18 @@ function SandboxPage() {
     navigate('/');
   };
 
+  const handleOpenSheet = (userId, userName) => {
+    setSheetUserId(userId);
+    setSheetUserName(userName);
+    setSheetModalOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setSheetModalOpen(false);
+    setSheetUserId(null);
+    setSheetUserName(null);
+  };
+
   // Handle connection error (e.g., user already connected)
   useEffect(() => {
     if (connectionError) {
@@ -112,6 +128,15 @@ function SandboxPage() {
         />
       )}
 
+      {sheetModalOpen && sheetUserId && (
+        <CharacterSheetModal
+          sandboxId={id}
+          userId={sheetUserId}
+          userName={sheetUserName}
+          onClose={handleCloseSheet}
+        />
+      )}
+
       <div className="sandbox-layout">
         {/* Main Canvas Area - Full width background */}
         <div className="canvas-area">
@@ -123,6 +148,17 @@ function SandboxPage() {
                 onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
                 title={leftPanelCollapsed ? "Show GM Panel" : "Hide GM Panel"}
               />
+            )}
+
+            {/* SHEET link - only for non-GM users */}
+            {currentUser?.role === 'player' && (
+              <button
+                className="sheet-link"
+                onClick={() => handleOpenSheet(currentUser.id, currentUser.name)}
+                title="Open Character Sheet"
+              >
+                SHEET
+              </button>
             )}
 
             <div className="header-spacer"></div>
@@ -187,6 +223,7 @@ function SandboxPage() {
             currentUser={currentUser}
             onCreateToken={(token) => setPendingToken(token)}
             isPanelCollapsed={rightPanelCollapsed}
+            onOpenSheet={handleOpenSheet}
           />
         </div>
       </div>

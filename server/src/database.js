@@ -99,6 +99,20 @@ function initializeDatabase() {
     }
   }
 
+  // Create character_sheets table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS character_sheets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      sandbox_id TEXT NOT NULL,
+      content TEXT DEFAULT '',
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (sandbox_id) REFERENCES sandboxes(id) ON DELETE CASCADE,
+      UNIQUE(user_id, sandbox_id)
+    )
+  `);
+
   console.log('Database initialized successfully');
 }
 
@@ -174,6 +188,15 @@ const getUsersBySandbox = db.prepare('SELECT id, name, role, created_at, passwor
 const updateUserName = db.prepare('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
 const updateUserPassword = db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND sandbox_id = ?');
 
+// Character sheet operations
+const getCharacterSheet = db.prepare('SELECT * FROM character_sheets WHERE user_id = ? AND sandbox_id = ?');
+const upsertCharacterSheet = db.prepare(`
+  INSERT INTO character_sheets (user_id, sandbox_id, content, updated_at)
+  VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+  ON CONFLICT(user_id, sandbox_id)
+  DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP
+`);
+
 module.exports = {
   db,
   // Sandbox
@@ -204,4 +227,7 @@ module.exports = {
   getUsersBySandbox,
   updateUserName,
   updateUserPassword,
+  // Character sheets
+  getCharacterSheet,
+  upsertCharacterSheet,
 };

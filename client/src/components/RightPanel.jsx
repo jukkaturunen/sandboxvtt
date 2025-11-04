@@ -4,7 +4,7 @@ import ChatPanel from './ChatPanel';
 import PlayersPanel from './PlayersPanel';
 import '../styles/RightPanel.css';
 
-function RightPanel({ sandboxId, socket, isConnected, currentUser, onCreateToken, isPanelCollapsed }) {
+function RightPanel({ sandboxId, socket, isConnected, currentUser, onCreateToken, isPanelCollapsed, onOpenSheet }) {
   const [activeTab, setActiveTab] = useState('tokens');
   const [players, setPlayers] = useState([]);
   const [chatHasUnread, setChatHasUnread] = useState(false);
@@ -83,6 +83,7 @@ function RightPanel({ sandboxId, socket, isConnected, currentUser, onCreateToken
             socket={socket}
             isConnected={isConnected}
             currentUser={currentUser}
+            onOpenSheet={onOpenSheet}
           />
         </div>
       </div>

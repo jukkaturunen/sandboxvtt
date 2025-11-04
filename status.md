@@ -1,6 +1,6 @@
 # SandboxVTT - Implementation Status
 
-**Last Updated**: 2025-10-30
+**Last Updated**: 2025-11-04
 
 ---
 
@@ -1108,6 +1108,248 @@ All major features production-ready with excellent UX. Ready for Phase 11 - Test
 - `client/src/utils/userStorage.js` (lines 29, 37-42)
 
 **Result**: Real-time updates now work correctly. Tokens can be created, moved, and deleted with instant synchronization across all clients. Active view changes propagate immediately without page reload.
+
+### Player Tracking Bug - FIXED ✅
+**Issue**: Players couldn't see each other in the Players panel. Player list remained empty or didn't update in real-time.
+
+**Root Cause**: Same issue as the real-time updates bug - `PlayersPanel` and `RightPanel` were setting up socket event listeners before the socket was fully connected. The `useEffect` only depended on `socket` (which doesn't change after being set in state), not on `isConnected` (which does change).
+
+**Solution**:
+1. **PlayersPanel Component** (`client/src/components/PlayersPanel.jsx`):
+   - Added `isConnected` prop to component signature
+   - Socket event listeners only set up when `socket && isConnected` are both true
+   - Added `isConnected` to dependency array in useEffect
+   - Removed debug console.log statements
+
+2. **RightPanel Component** (`client/src/components/RightPanel.jsx`):
+   - Added `isConnected` prop to component signature
+   - Applied same socket connection check before setting up listeners
+   - Passes `isConnected` prop down to PlayersPanel
+
+3. **SandboxPage Component** (`client/src/pages/SandboxPage.jsx`):
+   - Passes `isConnected` from `useSocket` to RightPanel
+
+**Files Modified**:
+- `client/src/components/PlayersPanel.jsx` (lines 6, 10-11, 47)
+- `client/src/components/RightPanel.jsx` (lines 7, 13-14, 26, 84)
+- `client/src/pages/SandboxPage.jsx` (line 185)
+
+**Result**: Player tracking now works correctly. Players see each other in real-time in the Players panel. Player list updates immediately when users join or leave.
+
+---
+
+## Recent Features (2025-11-04)
+
+### Character Sheet System - COMPLETED ✅
+
+**Goal**: Allow players to create and maintain character sheets that are private to them and viewable/editable by the GM.
+
+#### Feature Overview
+- **Per-user character sheets**: Each player has their own character sheet stored per sandbox
+- **GM oversight**: GMs can view and edit all player character sheets
+- **Private data**: Sheet changes are NOT broadcast - only visible to the owner and GM
+- **No character limit**: Unlimited text storage for character details
+- **Manual save**: Save button prevents accidental data loss
+
+#### Database Implementation
+
+**New Table**: `character_sheets`
+```sql
+CREATE TABLE character_sheets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  sandbox_id TEXT NOT NULL,
+  content TEXT DEFAULT '',
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (sandbox_id) REFERENCES sandboxes(id) ON DELETE CASCADE,
+  UNIQUE(user_id, sandbox_id)
+)
+```
+
+**Prepared Statements**:
+- `getCharacterSheet(user_id, sandbox_id)` - Retrieve sheet content
+- `upsertCharacterSheet(user_id, sandbox_id, content)` - Create or update sheet
+
+**Files Modified**:
+- `server/src/database.js` (lines 102-114, 177-184, 207-209)
+
+#### Backend API Endpoints
+
+1. **GET** `/api/sandbox/:sandboxId/user/:userId/sheet`
+   - Retrieves character sheet for a specific user
+   - Returns `{ content: string, updated_at: datetime }`
+   - Verifies user exists before retrieval
+
+2. **PUT** `/api/sandbox/:sandboxId/user/:userId/sheet`
+   - Updates character sheet content
+   - Request body: `{ content: string }`
+   - Returns `{ success: true, content: string }`
+   - Validates content is a string (allows empty string)
+
+**Files Modified**:
+- `server/src/routes.js` (lines 569-621)
+
+#### Frontend Components
+
+**CharacterSheetModal Component** (`client/src/components/CharacterSheetModal.jsx`)
+- Modal overlay with dark theme matching app design
+- Editable textarea with no character limit
+- Close button (×) in header
+- Save button at bottom
+- Loading states while fetching sheet
+- Success notifications after save
+- Error handling with user-friendly messages
+- Auto-loads existing sheet content on open
+
+**CharacterSheetModal Styles** (`client/src/styles/CharacterSheetModal.css`)
+- Dark theme (#2c3e50 background)
+- Monospace font (Courier New) for textarea
+- Large modal (700px max-width, 80vh max-height)
+- Turquoise accent color (#4ecdc4) for focus states
+- Success message in green, errors in red
+
+#### UI Integration Points
+
+**1. Canvas Header - SHEET Link** (`client/src/pages/SandboxPage.jsx` lines 154-162)
+- Positioned on left side of canvas header
+- **Only visible to players** (not GMs)
+- Button text: "SHEET" in uppercase
+- Opens player's own character sheet
+- Styling: White text, hover effect, letter-spacing
+
+**CSS Styling** (`client/src/styles/SandboxPage.css` lines 114-139):
+```css
+.sheet-link {
+  position: absolute;
+  left: 20px;
+  height: 43px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  /* Hover effects with background highlight */
+}
+```
+
+**2. Players Panel - Sheet Buttons** (`client/src/components/PlayersPanel.jsx` lines 90-99)
+- 📄 emoji button next to each player
+- **Players**: See button only on their own character
+- **GMs**: See buttons on ALL player characters (not on GM characters)
+- Tooltip shows whose sheet will open
+- Button only appears for non-GM characters
+
+**CSS Styling** (`client/src/styles/PlayersPanel.css` lines 92-113):
+```css
+.sheet-btn {
+  border: 1px solid #4ecdc4;
+  color: #4ecdc4;
+  font-size: 1.2rem;
+  /* Scale transform on hover */
+}
+```
+
+#### Component Data Flow
+
+```
+SandboxPage (manages modal state)
+  └─> CharacterSheetModal (when sheetModalOpen === true)
+  └─> RightPanel (passes onOpenSheet callback)
+      └─> PlayersPanel (sheet buttons)
+          └─> onClick → onOpenSheet(userId, userName)
+```
+
+**State Management** (`client/src/pages/SandboxPage.jsx`):
+- `sheetModalOpen` - Controls modal visibility
+- `sheetUserId` - User ID of sheet being viewed
+- `sheetUserName` - User name for modal title
+- `handleOpenSheet(userId, userName)` - Opens modal
+- `handleCloseSheet()` - Closes modal and clears state
+
+**Files Modified**:
+- `client/src/pages/SandboxPage.jsx` (added modal state and handlers)
+- `client/src/components/RightPanel.jsx` (passes onOpenSheet prop)
+- `client/src/components/PlayersPanel.jsx` (adds sheet buttons)
+
+#### Access Control
+
+**Player Permissions**:
+- ✅ View their own sheet (via header link or Players panel)
+- ✅ Edit their own sheet
+- ❌ Cannot see other players' sheets
+- ❌ GM does not have a personal sheet
+
+**GM Permissions**:
+- ✅ View ALL player character sheets
+- ✅ Edit ALL player character sheets
+- ❌ No "SHEET" link in header (GMs don't have personal sheets)
+- ✅ Sheet buttons appear in Players panel for all non-GM characters
+
+**Implementation** (`client/src/components/PlayersPanel.jsx` line 91):
+```jsx
+{currentUser &&
+  (player.userId === currentUser.id || currentUser.role === 'gm') &&
+  player.role !== 'gm' && (
+    <button onClick={() => onOpenSheet(player.userId, player.name)}>📄</button>
+)}
+```
+
+#### User Experience Features
+
+1. **Auto-load**: Sheet content automatically loads when modal opens
+2. **Manual save**: Prevents accidental data loss from auto-save
+3. **Save confirmation**: "Saved successfully!" message appears for 3 seconds
+4. **Error handling**: Clear error messages if save fails
+5. **Loading states**: Shows "Loading..." while fetching data
+6. **Modal backdrop**: Click outside to close
+7. **Close button**: Large × button in header
+8. **Keyboard support**: ESC key closes modal (via backdrop click)
+
+#### Security & Data Privacy
+
+- ✅ Sheet changes are NOT broadcast via WebSocket
+- ✅ Data stored server-side in SQLite database
+- ✅ User verification required for all API calls
+- ✅ No data leakage between users (except to GM)
+- ✅ Foreign key constraints ensure data integrity
+- ✅ CASCADE deletion removes sheets when users/sandboxes deleted
+
+#### Testing Checklist
+
+- [x] Player can open their sheet via header link
+- [x] Player can open their sheet via Players panel
+- [x] Player can save sheet content
+- [x] Sheet persists across page reloads
+- [x] GM can view player sheets from Players panel
+- [x] GM can edit player sheets
+- [x] GM does not have personal sheet
+- [x] Sheet buttons only appear for non-GM characters
+- [x] Error handling works (invalid user, network errors)
+- [x] Loading states display correctly
+- [x] Modal closes properly (backdrop click, close button)
+
+#### Files Summary
+
+**Backend**:
+- `server/src/database.js` - Database schema and queries
+- `server/src/routes.js` - API endpoints
+
+**Frontend Components**:
+- `client/src/components/CharacterSheetModal.jsx` - Main modal component
+- `client/src/components/PlayersPanel.jsx` - Sheet button integration
+- `client/src/components/RightPanel.jsx` - Prop passing
+- `client/src/pages/SandboxPage.jsx` - State management and header link
+
+**Frontend Styles**:
+- `client/src/styles/CharacterSheetModal.css` - Modal styling
+- `client/src/styles/PlayersPanel.css` - Sheet button styling
+- `client/src/styles/SandboxPage.css` - Header link styling
+
+**Total**: 3 backend files, 7 frontend files modified/created
+
+#### Result
+
+✅ **Character Sheet System Complete** - Players can create and maintain detailed character sheets that are private to them. GMs have full oversight with the ability to view and edit all player sheets. The feature integrates seamlessly with the existing UI via the canvas header link and Players panel buttons, maintaining the app's dark theme and UX consistency.
+
+---
 
 ## Known Issues
 

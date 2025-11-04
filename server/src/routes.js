@@ -566,5 +566,59 @@ module.exports = function(io) {
     }
   });
 
+  // GET /api/sandbox/:sandboxId/user/:userId/sheet - Get character sheet
+  router.get('/sandbox/:sandboxId/user/:userId/sheet', (req, res) => {
+    try {
+      const { sandboxId, userId } = req.params;
+
+      // Verify user exists
+      const user = db.getUserById.get(userId, sandboxId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Get character sheet (may not exist yet)
+      const sheet = db.getCharacterSheet.get(userId, sandboxId);
+
+      res.json({
+        content: sheet ? sheet.content : '',
+        updated_at: sheet ? sheet.updated_at : null
+      });
+    } catch (error) {
+      console.error('Error getting character sheet:', error);
+      res.status(500).json({ error: 'Failed to get character sheet' });
+    }
+  });
+
+  // PUT /api/sandbox/:sandboxId/user/:userId/sheet - Update character sheet
+  router.put('/sandbox/:sandboxId/user/:userId/sheet', (req, res) => {
+    try {
+      const { sandboxId, userId } = req.params;
+      const { content } = req.body;
+
+      // Verify user exists
+      const user = db.getUserById.get(userId, sandboxId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Validate content (allow empty string)
+      if (typeof content !== 'string') {
+        return res.status(400).json({ error: 'Content must be a string' });
+      }
+
+      // Upsert character sheet
+      db.upsertCharacterSheet.run(userId, sandboxId, content);
+
+      res.json({
+        success: true,
+        content
+      });
+    } catch (error) {
+      console.error('Error updating character sheet:', error);
+      res.status(500).json({ error: 'Failed to update character sheet' });
+    }
+  });
+
   return router;
 };
