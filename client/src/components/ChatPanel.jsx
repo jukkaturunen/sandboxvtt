@@ -321,14 +321,13 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
 
       {/* Dice Visibility Selector */}
       <div className="dice-visibility-selector">
-        <label htmlFor="dice-visibility">Dice Roll Visibility:</label>
         <select
           id="dice-visibility"
           value={diceVisibility}
           onChange={(e) => setDiceVisibility(e.target.value)}
           className="visibility-dropdown"
         >
-          <option value="public">Public Roll (All)</option>
+          <option value="public">Public Roll</option>
           <option value="to_gm">Roll to GM</option>
           <option value="blind_to_gm">Blind Roll to GM</option>
           <option value="to_self">Roll to Self</option>
