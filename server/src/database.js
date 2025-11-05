@@ -99,6 +99,16 @@ function initializeDatabase() {
     }
   }
 
+  // Add dice_visibility column (migration for dice roll visibility feature)
+  try {
+    db.exec(`ALTER TABLE chat_messages ADD COLUMN dice_visibility TEXT DEFAULT 'public'`);
+    console.log('Added dice_visibility column to chat_messages table');
+  } catch (error) {
+    if (!error.message.includes('duplicate column name')) {
+      console.error('Migration error:', error.message);
+    }
+  }
+
   // Create character_sheets table
   db.exec(`
     CREATE TABLE IF NOT EXISTS character_sheets (
@@ -147,8 +157,8 @@ const deleteToken = db.prepare('DELETE FROM tokens WHERE id = ?');
 
 // Chat operations
 const createMessage = db.prepare(`
-  INSERT INTO chat_messages (sandbox_id, sender_id, sender_name, sender_role, message, recipient_id, recipient_name, is_dice_roll, dice_command, dice_results)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO chat_messages (sandbox_id, sender_id, sender_name, sender_role, message, recipient_id, recipient_name, is_dice_roll, dice_command, dice_results, dice_visibility)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 const getMessages = db.prepare('SELECT * FROM chat_messages WHERE sandbox_id = ? ORDER BY created_at ASC');
 const getMessagesForPlayer = db.prepare(`
@@ -165,9 +175,20 @@ const getMessagesForUser = db.prepare(`
   SELECT * FROM chat_messages
   WHERE sandbox_id = ?
     AND (
-      recipient_id IS NULL
-      OR recipient_id = ?
-      OR sender_id = ?
+      -- Public messages (no recipient, and either no visibility or public visibility)
+      (recipient_id IS NULL AND (dice_visibility IS NULL OR dice_visibility = 'public'))
+
+      -- Private messages to/from user
+      OR (recipient_id = ? OR sender_id = ?)
+
+      -- Dice rolls: to_gm (sender or GM sees)
+      OR (dice_visibility = 'to_gm' AND (sender_id = ? OR ? = 'gm'))
+
+      -- Dice rolls: blind_to_gm (sender or GM sees)
+      OR (dice_visibility = 'blind_to_gm' AND (sender_id = ? OR ? = 'gm'))
+
+      -- Dice rolls: to_self (only sender)
+      OR (dice_visibility = 'to_self' AND sender_id = ?)
     )
   ORDER BY created_at ASC
 `);

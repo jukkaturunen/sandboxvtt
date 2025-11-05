@@ -92,11 +92,17 @@ function SandboxPage() {
   // Handle connection error (e.g., user already connected)
   useEffect(() => {
     if (connectionError) {
-      // Log out the user and show error
-      clearUserForSandbox(id);
-      setCurrentUser(null);
-      setShowAuthModal(true);
-      setAuthError(connectionError);
+      // Only clear user for actual duplicate connection errors
+      // Don't clear on transient connection issues
+      if (connectionError.includes('already connected')) {
+        clearUserForSandbox(id);
+        setCurrentUser(null);
+        setShowAuthModal(true);
+        setAuthError(connectionError);
+      } else {
+        // For other connection errors, just show the error without logging out
+        console.warn('Connection error:', connectionError);
+      }
     }
   }, [connectionError, id]);
 

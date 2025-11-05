@@ -7,6 +7,7 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
   const [selectedChannel, setSelectedChannel] = useState('ALL'); // 'ALL' or userId
   const [unreadChannels, setUnreadChannels] = useState(new Set());
   const [errorNotification, setErrorNotification] = useState(null);
+  const [diceVisibility, setDiceVisibility] = useState('public'); // Dice roll visibility mode
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
 
@@ -16,7 +17,7 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
       if (!currentUser) return;
 
       try {
-        const response = await fetch(`/api/sandbox/${sandboxId}/messages?for_user=${encodeURIComponent(currentUser.id)}`);
+        const response = await fetch(`/api/sandbox/${sandboxId}/messages?for_user=${encodeURIComponent(currentUser.id)}&user_role=${encodeURIComponent(currentUser.role || 'player')}`);
         if (response.ok) {
           const data = await response.json();
           setAllMessages(data);
@@ -165,11 +166,14 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
     if (!newMessage.trim() || !currentUser) return;
 
     try {
-      // Get recipient info
+      // Check if this is a dice roll
+      const isDiceRoll = newMessage.trim().startsWith('/r ');
+
+      // Get recipient info (only for non-dice-roll messages)
       let recipientId = null;
       let recipientName = null;
 
-      if (selectedChannel !== 'ALL') {
+      if (!isDiceRoll && selectedChannel !== 'ALL') {
         const recipient = players.find(p => p.userId === selectedChannel);
         if (recipient) {
           recipientId = recipient.userId;
@@ -177,17 +181,25 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
         }
       }
 
+      // Build payload
+      const payload = {
+        sender_id: currentUser.id,
+        sender_name: currentUser.name,
+        sender_role: currentUser.role || 'player',
+        message: newMessage.trim(),
+        recipient_id: isDiceRoll ? null : recipientId,
+        recipient_name: isDiceRoll ? null : recipientName
+      };
+
+      // Include dice_visibility only for dice rolls
+      if (isDiceRoll) {
+        payload.dice_visibility = diceVisibility;
+      }
+
       const response = await fetch(`/api/sandbox/${sandboxId}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender_id: currentUser.id,
-          sender_name: currentUser.name,
-          sender_role: currentUser.role || 'player',
-          message: newMessage.trim(),
-          recipient_id: recipientId,
-          recipient_name: recipientName
-        })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -204,6 +216,21 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
       console.error('Failed to send message:', error);
       showErrorNotification('Failed to send message. Please check your connection.');
     }
+  };
+
+  // Helper to get display text for a message (handles blinded rolls)
+  const getMessageDisplayText = (msg) => {
+    // Check if this is a blind roll sent by the current user
+    if (msg.is_dice_roll &&
+        msg.dice_visibility === 'blind_to_gm' &&
+        msg.sender_id === currentUser?.id &&
+        currentUser?.role !== 'gm') {
+      // Extract the command from the original message
+      const lines = msg.message.split('\n');
+      const commandLine = lines[0]; // "/r 1d20" or similar
+      return `${commandLine}\nRolled: ???\nSum = ???`;
+    }
+    return msg.message;
   };
 
   const formatTimestamp = (timestamp) => {
@@ -278,7 +305,7 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
                 <span className="chat-sender">{msg.sender_name}</span>
                 <span className="chat-timestamp">{formatTimestamp(msg.created_at)}</span>
               </div>
-              <div className="chat-message-text">{msg.message}</div>
+              <div className="chat-message-text">{getMessageDisplayText(msg)}</div>
             </div>
           ))
         )}
@@ -291,6 +318,22 @@ function ChatPanel({ sandboxId, socket, currentUser, players, isActiveTab, onUnr
           {errorNotification}
         </div>
       )}
+
+      {/* Dice Visibility Selector */}
+      <div className="dice-visibility-selector">
+        <label htmlFor="dice-visibility">Dice Roll Visibility:</label>
+        <select
+          id="dice-visibility"
+          value={diceVisibility}
+          onChange={(e) => setDiceVisibility(e.target.value)}
+          className="visibility-dropdown"
+        >
+          <option value="public">Public Roll (All)</option>
+          <option value="to_gm">Roll to GM</option>
+          <option value="blind_to_gm">Blind Roll to GM</option>
+          <option value="to_self">Roll to Self</option>
+        </select>
+      </div>
 
       {/* Input Form */}
       <form className="chat-input-form" onSubmit={handleSendMessage}>

@@ -189,6 +189,44 @@
   }
 }
 
+/* Dice Visibility Selector */
+.dice-visibility-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #2c3e50;
+  border-top: 1px solid #34495e;
+}
+
+.dice-visibility-selector label {
+  font-size: 0.85rem;
+  color: #95a5a6;
+  white-space: nowrap;
+}
+
+.visibility-dropdown {
+  flex: 1;
+  background: #34495e;
+  color: #ecf0f1;
+  border: 1px solid #4ecdc4;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.visibility-dropdown:hover {
+  border-color: #5eddd4;
+}
+
+.visibility-dropdown:focus {
+  border-color: #4ecdc4;
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+}
+
 /* Input Form */
 .chat-input-form {
   display: flex;

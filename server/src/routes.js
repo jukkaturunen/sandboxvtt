@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const db = require('./database');
 const { processDiceRoll } = require('./diceRoller');
+const { emitDiceRollByVisibility } = require('./socketEvents');
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
@@ -283,11 +284,17 @@ module.exports = function(io) {
     try {
       const sandboxId = req.params.id;
       const userId = req.query.for_user;
+      const userRole = req.query.user_role || 'player'; // Get user role from query params
 
       // If for_user query param is provided, filter messages for that user
       let messages;
       if (userId) {
-        messages = db.getMessagesForUser.all(sandboxId, userId, userId);
+        // Pass additional parameters for visibility filtering
+        // Parameters: sandboxId, userId (for recipient_id), userId (for sender_id),
+        //             userId (for to_gm sender), userRole (for to_gm GM check),
+        //             userId (for blind_to_gm sender), userRole (for blind_to_gm GM check),
+        //             userId (for to_self sender)
+        messages = db.getMessagesForUser.all(sandboxId, userId, userId, userId, userRole, userId, userRole, userId);
       } else {
         // Return all messages (for backward compatibility)
         messages = db.getMessages.all(sandboxId);
@@ -304,7 +311,7 @@ module.exports = function(io) {
   router.post('/sandbox/:id/message', (req, res) => {
     try {
       const sandboxId = req.params.id;
-      const { sender_id, sender_name, sender_role, message, recipient_id, recipient_name } = req.body;
+      const { sender_id, sender_name, sender_role, message, recipient_id, recipient_name, dice_visibility } = req.body;
 
       if (!sender_id || !sender_name || !sender_role || !message) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -314,11 +321,15 @@ module.exports = function(io) {
       const recipientId = recipient_id || null;
       const recipientName = recipient_name || null;
 
+      // dice_visibility is optional - defaults to 'public'
+      const diceVisibility = dice_visibility || 'public';
+
       // Check if this is a dice roll command
       let isDiceRoll = 0;
       let diceCommand = null;
       let diceResults = null;
       let finalMessage = message;
+      let blindedMessage = null;
 
       if (message.trim().startsWith('/r ')) {
         const rollCommand = message.trim().substring(3).trim();
@@ -342,6 +353,11 @@ module.exports = function(io) {
           sum: rollResult.sum
         });
         finalMessage = rollResult.formattedOutput;
+
+        // Create blinded version for 'blind_to_gm' mode
+        if (diceVisibility === 'blind_to_gm') {
+          blindedMessage = `/r ${diceCommand}\nRolled: ???\nSum = ???`;
+        }
       }
 
       const result = db.createMessage.run(
@@ -354,7 +370,8 @@ module.exports = function(io) {
         recipientName,
         isDiceRoll,
         diceCommand,
-        diceResults
+        diceResults,
+        diceVisibility
       );
 
       const messageData = {
@@ -369,11 +386,25 @@ module.exports = function(io) {
         is_dice_roll: isDiceRoll,
         dice_command: diceCommand,
         dice_results: diceResults,
+        dice_visibility: diceVisibility,
         created_at: new Date().toISOString()
       };
 
-      // Emit socket event to notify all clients
-      io.to(sandboxId).emit('chat-message', messageData);
+      // Emit socket event based on visibility
+      if (isDiceRoll && diceVisibility !== 'public') {
+        // Create blinded message data for blind_to_gm mode
+        const blindedMessageData = blindedMessage ? {
+          ...messageData,
+          message: blindedMessage,
+          dice_results: JSON.stringify({ hidden: true })
+        } : null;
+
+        // Use visibility-aware emission
+        emitDiceRollByVisibility(io, sandboxId, messageData, blindedMessageData, diceVisibility, sender_id);
+      } else {
+        // Regular message or public dice roll - broadcast to all
+        io.to(sandboxId).emit('chat-message', messageData);
+      }
 
       res.json(messageData);
     } catch (error) {

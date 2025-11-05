@@ -24,11 +24,25 @@ function initializeSocketEvents(io) {
 
       // Check if user is already connected
       if (sandboxUsers.has(userId)) {
-        console.log(`User ${userId} already connected to sandbox ${sandboxId}`);
-        socket.emit('user-already-connected', {
-          error: 'This user is already connected to the sandbox from another device or tab.'
-        });
-        return;
+        const existingPlayer = sandboxUsers.get(userId);
+        const existingSocketId = existingPlayer.socketId;
+
+        // Check if the existing socket is still connected
+        const existingSocket = io.sockets.sockets.get(existingSocketId);
+
+        if (existingSocket && existingSocket.connected) {
+          // Socket is still connected - this is a duplicate login attempt
+          console.log(`User ${userId} already connected to sandbox ${sandboxId} from another tab/device`);
+          socket.emit('user-already-connected', {
+            error: 'This user is already connected to the sandbox from another device or tab.'
+          });
+          return;
+        } else {
+          // Old socket is disconnected - clean up stale data and allow rejoin
+          console.log(`Cleaning up stale connection for user ${userId} in sandbox ${sandboxId}`);
+          sandboxUsers.delete(userId);
+          socketToUser.delete(existingSocketId);
+        }
       }
 
       socket.join(sandboxId);
@@ -205,4 +219,58 @@ function initializeSocketEvents(io) {
   });
 }
 
+// Helper function to emit dice rolls based on visibility settings
+function emitDiceRollByVisibility(io, sandboxId, messageData, blindedMessageData, visibility, senderId) {
+  const players = sandboxPlayers.get(sandboxId);
+
+  if (!players) {
+    console.error(`No players found for sandbox ${sandboxId}`);
+    return;
+  }
+
+  switch(visibility) {
+    case 'public':
+      // Emit to entire sandbox
+      io.to(sandboxId).emit('chat-message', messageData);
+      break;
+
+    case 'to_gm':
+      // Emit to GMs and sender
+      players.forEach((playerData, userId) => {
+        if (playerData.role === 'gm' || userId === senderId) {
+          io.to(playerData.socketId).emit('chat-message', messageData);
+        }
+      });
+      break;
+
+    case 'blind_to_gm':
+      // Emit full roll to GMs, blinded version to sender
+      players.forEach((playerData, userId) => {
+        if (playerData.role === 'gm') {
+          // GM sees full results
+          io.to(playerData.socketId).emit('chat-message', messageData);
+        } else if (userId === senderId) {
+          // Sender sees blinded version (???)
+          io.to(playerData.socketId).emit('chat-message', blindedMessageData);
+        }
+      });
+      break;
+
+    case 'to_self':
+      // Emit only to sender
+      const senderData = players.get(senderId);
+      if (senderData) {
+        io.to(senderData.socketId).emit('chat-message', messageData);
+      }
+      break;
+
+    default:
+      // Default to public if visibility is not recognized
+      console.warn(`Unknown dice visibility: ${visibility}, defaulting to public`);
+      io.to(sandboxId).emit('chat-message', messageData);
+  }
+}
+
 module.exports = initializeSocketEvents;
+module.exports.emitDiceRollByVisibility = emitDiceRollByVisibility;
+module.exports.sandboxPlayers = sandboxPlayers;
