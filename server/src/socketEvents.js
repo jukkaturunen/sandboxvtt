@@ -175,6 +175,20 @@ function initializeSocketEvents(io) {
       socket.to(sandboxId).emit('chat-message', message);
     });
 
+    // ========== PING EVENTS ==========
+
+    // Player ping (long-click on map)
+    socket.on('player-ping', ({ sandboxId, userId, userName, position_x, position_y }) => {
+      // Broadcast ping animation to all clients in the room (including sender)
+      io.to(sandboxId).emit('ping-animation', {
+        userId,
+        userName,
+        position_x,
+        position_y,
+        timestamp: Date.now()
+      });
+    });
+
     // ========== CONNECTION EVENTS ==========
 
     socket.on('disconnect', () => {

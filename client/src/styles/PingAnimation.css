@@ -1,0 +1,73 @@
+.ping-container {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  transform: translate(-50%, -50%);
+}
+
+.ping-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  border: 2px solid #ff5050;
+  border-radius: 50%;
+  background: rgba(255, 80, 80, 0.2);
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: ripple-expand 1.5s ease-out forwards;
+}
+
+.ping-ripple-1 {
+  animation-delay: 0ms;
+}
+
+.ping-ripple-2 {
+  animation-delay: 200ms;
+}
+
+.ping-ripple-3 {
+  animation-delay: 400ms;
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+.ping-name-tag {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 80, 80, 0.85);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: name-fade 1.5s ease-out forwards;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes name-fade {
+  0% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}

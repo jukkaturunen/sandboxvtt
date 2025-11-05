@@ -94,7 +94,7 @@ function PlayersPanel({ sandboxId, socket, isConnected, currentUser, onOpenSheet
                   onClick={() => onOpenSheet(player.userId, player.name)}
                   title={player.userId === currentUser.id ? "Open your character sheet" : `Open ${player.name}'s character sheet`}
                 >
-                  📄
+                  edit sheet
                 </button>
               )}
             </div>

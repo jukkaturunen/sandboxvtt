@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import PingAnimation from './PingAnimation';
 import '../styles/ImageCanvas.css';
 
-function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlaced, gmPreviewImage, rightPanelCollapsed }) {
+function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlaced, gmPreviewImage, rightPanelCollapsed, currentUser }) {
   const [activeImage, setActiveImage] = useState(null);
   const [tokens, setTokens] = useState([]);
   const [scale, setScale] = useState(1);
@@ -13,9 +14,13 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
   const [tokenDragStart, setTokenDragStart] = useState({ x: 0, y: 0 });
   const [contextMenu, setContextMenu] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [activePings, setActivePings] = useState([]);
   const containerRef = useRef(null);
   const imageRef = useRef(null);
   const savedStateRef = useRef(null); // Store canvas state before preview
+  const longPressTimerRef = useRef(null);
+  const longPressStartPos = useRef(null);
+  const isLongPressingRef = useRef(false);
 
   // Determine which image to display (preview takes priority for GM)
   const displayImage = gmPreviewImage || activeImage;
@@ -81,16 +86,24 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
       setContextMenu(null);
     };
 
+    const handlePingAnimation = (pingData) => {
+      // Add ping to active pings with unique ID
+      const pingWithId = { ...pingData, id: `${pingData.userId}-${pingData.timestamp}` };
+      setActivePings(prev => [...prev, pingWithId]);
+    };
+
     socket.on('active-view-changed', handleActiveViewChanged);
     socket.on('token-created', handleTokenCreated);
     socket.on('token-moved', handleTokenMoved);
     socket.on('token-deleted', handleTokenDeleted);
+    socket.on('ping-animation', handlePingAnimation);
 
     return () => {
       socket.off('active-view-changed', handleActiveViewChanged);
       socket.off('token-created', handleTokenCreated);
       socket.off('token-moved', handleTokenMoved);
       socket.off('token-deleted', handleTokenDeleted);
+      socket.off('ping-animation', handlePingAnimation);
     };
   }, [socket, isConnected, fetchActiveImage]);
 
@@ -181,10 +194,43 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
         x: e.clientX - position.x,
         y: e.clientY - position.y
       });
+
+      // Start long-press timer for ping (only if not on token)
+      longPressStartPos.current = { x: e.clientX, y: e.clientY };
+      isLongPressingRef.current = false;
+      longPressTimerRef.current = setTimeout(() => {
+        // Trigger ping immediately when threshold is reached
+        if (socket && currentUser && imageRef.current && longPressStartPos.current) {
+          const imageRect = imageRef.current.getBoundingClientRect();
+          const x = (longPressStartPos.current.x - imageRect.left) / scale;
+          const y = (longPressStartPos.current.y - imageRect.top) / scale;
+
+          socket.emit('player-ping', {
+            sandboxId,
+            userId: currentUser.id,
+            userName: currentUser.name,
+            position_x: x,
+            position_y: y
+          });
+
+          isLongPressingRef.current = true;
+        }
+      }, 500); // 500ms threshold for long-press
     }
   };
 
   const handleMouseMove = (e) => {
+    // Cancel long-press if mouse moves too much (drag detection)
+    if (longPressStartPos.current && longPressTimerRef.current) {
+      const dx = Math.abs(e.clientX - longPressStartPos.current.x);
+      const dy = Math.abs(e.clientY - longPressStartPos.current.y);
+      if (dx > 5 || dy > 5) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+        isLongPressingRef.current = false;
+      }
+    }
+
     if (isDraggingCanvas) {
       setPosition({
         x: e.clientX - dragStart.x,
@@ -206,7 +252,15 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
     }
   };
 
-  const handleMouseUp = async () => {
+  const handleMouseUp = async (e) => {
+    // Clear long-press timer (ping already triggered in timeout if threshold reached)
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    isLongPressingRef.current = false;
+    longPressStartPos.current = null;
+
     if (isDraggingToken && draggedTokenId) {
       const token = tokens.find(t => t.id === draggedTokenId);
       if (token) {
@@ -406,6 +460,19 @@ function ImageCanvas({ sandboxId, socket, isConnected, pendingToken, onTokenPlac
           >
             <span className="token-name">{token.name}</span>
           </div>
+        ))}
+
+        {/* Render ping animations */}
+        {activePings.map((ping) => (
+          <PingAnimation
+            key={ping.id}
+            position_x={ping.position_x}
+            position_y={ping.position_y}
+            userName={ping.userName}
+            onComplete={() => {
+              setActivePings(prev => prev.filter(p => p.id !== ping.id));
+            }}
+          />
         ))}
       </div>
 

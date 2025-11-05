@@ -199,6 +199,7 @@ function SandboxPage() {
               sandboxId={id}
               socket={socket}
               isConnected={isConnected}
+              currentUser={currentUser}
               pendingToken={pendingToken}
               onTokenPlaced={() => setPendingToken(null)}
               gmPreviewImage={currentUser?.role === 'gm' ? previewImage : null}
