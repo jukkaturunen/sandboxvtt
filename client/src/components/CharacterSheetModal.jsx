@@ -63,10 +63,7 @@ function CharacterSheetModal({ sandboxId, userId, userName, onClose }) {
   return (
     <div className="character-sheet-modal-overlay" onClick={onClose}>
       <div className="character-sheet-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="character-sheet-header">
-          <h2>{userName}'s Character Sheet</h2>
-          <button className="close-button" onClick={onClose}>×</button>
-        </div>
+        <button className="close-button" onClick={onClose}>×</button>
 
         {loading ? (
           <div className="character-sheet-loading">Loading...</div>
